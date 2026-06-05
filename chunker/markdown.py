@@ -28,7 +28,7 @@ class MarkdownChunker:
         chunks = self._add_overlap(chunks)
         chunks = self._filter_irrelevant(chunks)
 
-        logger.info(f"  {filename}: {len(chunks)} chunks generados")
+        logger.info(f"  {filename}: {len(chunks)} chunks generated")
         return chunks
 
     def _extract_frontmatter(self, content: str) -> tuple[dict, str]:

@@ -5,8 +5,8 @@ load_dotenv()
 
 LOG_LEVEL = "INFO"
 
-EMBEDDING_PROVIDER = "local"
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+EMBEDDING_PROVIDER = "ollama"
+EMBEDDING_MODEL = "qwen3-embedding:0.6b"
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 

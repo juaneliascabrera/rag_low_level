@@ -17,7 +17,7 @@ class OllamaClient(LLMClient):
             {"role": "user", "content": query}
         ]
 
-        logger.info(f"Generando con {self.model}...")
+        logger.info(f"Generating with {self.model}...")
 
         try:
             response = requests.post(
