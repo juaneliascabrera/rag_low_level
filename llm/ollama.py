@@ -7,17 +7,18 @@ class OllamaClient:
         self.model = model
 
     def generate(self, system_prompt: str, context: str, query: str) -> str:
-        prompt = f"{system_prompt}\n\nPregunta: {query}"
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Contexto:\n{context}\n\nPregunta: {query}"}
+        ]
 
         response = requests.post(
-            f"{self.base_url}/api/generate",
+            f"{self.base_url}/api/chat",
             json={
                 "model": self.model,
-                "prompt": prompt,
-                "system": system_prompt,
-                "context": context,
+                "messages": messages,
                 "stream": False
             }
         )
         response.raise_for_status()
-        return response.json()["response"]
+        return response.json()["message"]["content"]
