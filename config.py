@@ -1,13 +1,18 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 EMBEDDING_PROVIDER = "local"
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
-OPENAI_API_KEY = ""
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 LLM_PROVIDER = "opencode"
 LLM_MODEL = "gemma4:e4b-it-qat"
 OLLAMA_BASE_URL = "http://localhost:11434"
 
-OPENCODE_API_KEY = ""
+OPENCODE_API_KEY = os.getenv("OPENCODE_API_KEY", "")
 OPENCODE_MODEL = "kimi-k2.6"
 
 DATA_DIR = "data/curated"

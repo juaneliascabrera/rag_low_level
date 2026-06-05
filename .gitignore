@@ -30,6 +30,9 @@ storage/
 *.sqlite
 *.sqlite3
 
+# Environment variables
+.env
+
 # IDE
 .vscode/
 .idea/
