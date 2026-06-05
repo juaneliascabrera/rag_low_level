@@ -86,6 +86,18 @@ class RAGSystem:
         system_prompt = config.SYSTEM_PROMPT.format(context=context)
 
         response = self.llm.generate(system_prompt, context, question)
+
+        if config.DEBUG_SHOW_CONTEXT:
+            print("\n" + "="*80, file=sys.stderr)
+            print("CONTEXTO RECUPERADO:", file=sys.stderr)
+            print("="*80, file=sys.stderr)
+            for i, result in enumerate(results, 1):
+                print(f"\n[Fragmento {i}] (similitud: {result['similarity']:.2f})", file=sys.stderr)
+                print(f"Source: {result['metadata'].get('source', 'N/A')}", file=sys.stderr)
+                print(f"Section: {result['metadata'].get('section', 'N/A')}", file=sys.stderr)
+                print("-"*80, file=sys.stderr)
+                print(result['text'], file=sys.stderr)
+
         return response
 
 
