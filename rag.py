@@ -35,7 +35,7 @@ class RAGSystem:
 
     def _create_llm(self):
         if config.LLM_PROVIDER == "ollama":
-            return OllamaClient(config.OLLAMA_BASE_URL, config.LLM_MODEL)
+            return OllamaClient(config.OLLAMA_BASE_URL, config.OLLAMA_MODEL)
         elif config.LLM_PROVIDER == "opencode":
             return OpenCodeClient(config.OPENCODE_MODEL, config.OPENCODE_API_KEY)
         else:
