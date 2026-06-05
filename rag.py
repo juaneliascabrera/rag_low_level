@@ -19,7 +19,7 @@ class RAGSystem:
         self.store = VectorStore(self.embedder.dimension(), config.STORAGE_DIR)
         self.chunker = MarkdownChunker()
         self.llm = self._create_llm()
-        self.cache = EmbeddingCache(config.CACHE_DIR)
+        self.cache = EmbeddingCache(config.CACHE_DIR, config.EMBEDDING_MODEL)
         self.reranker = Reranker(config.RERANK_MODEL) if config.RERANK_ENABLED else None
         self.hyde = HyDETransformer(self.llm) if config.HYDE_ENABLED else None
 

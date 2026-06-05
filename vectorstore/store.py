@@ -13,6 +13,7 @@ class VectorStore:
         self.vectors = np.array([])
         self.texts = []
         self.metadata = []
+        self._pending_vectors = []
 
     def _normalize(self, vector: np.ndarray) -> np.ndarray:
         norm = np.linalg.norm(vector)
@@ -22,15 +23,21 @@ class VectorStore:
 
     def add(self, vector: list[float], text: str, metadata: dict):
         normalized = self._normalize(np.array(vector))
-        if self.vectors.size == 0:
-            self.vectors = np.array([normalized])
-        else:
-            self.vectors = np.vstack([self.vectors, normalized])
+        self._pending_vectors.append(normalized)
         self.texts.append(text)
         self.metadata.append(metadata)
 
+    def _flush_pending(self):
+        if self._pending_vectors:
+            if self.vectors.size == 0:
+                self.vectors = np.array(self._pending_vectors)
+            else:
+                self.vectors = np.vstack([self.vectors] + self._pending_vectors)
+            self._pending_vectors = []
+
     def search(self, query_vector: list[float], top_k: int = 3, threshold: float = 0.7, 
                metadata_filter: dict | None = None) -> list[dict]:
+        self._flush_pending()
         if self.vectors.size == 0:
             return []
 
@@ -65,6 +72,7 @@ class VectorStore:
         return True
 
     def save(self):
+        self._flush_pending()
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
         if self.vectors.size > 0:
@@ -114,4 +122,5 @@ class VectorStore:
         self.vectors = np.array([])
         self.texts = []
         self.metadata = []
+        self._pending_vectors = []
         logger.info("VectorStore limpiado")
