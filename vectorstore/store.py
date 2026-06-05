@@ -11,8 +11,15 @@ class VectorStore:
         self.texts = []
         self.metadata = []
 
+    def _normalize(self, vector: np.ndarray) -> np.ndarray:
+        norm = np.linalg.norm(vector)
+        if norm == 0:
+            return vector
+        return vector / norm
+
     def add(self, vector: list[float], text: str, metadata: dict):
-        self.vectors.append(vector)
+        normalized = self._normalize(np.array(vector))
+        self.vectors.append(normalized.tolist())
         self.texts.append(text)
         self.metadata.append(metadata)
 
@@ -20,12 +27,10 @@ class VectorStore:
         if not self.vectors:
             return []
 
-        query = np.array(query_vector)
+        query = self._normalize(np.array(query_vector))
         vectors_array = np.array(self.vectors)
 
-        similarities = np.dot(vectors_array, query) / (
-            np.linalg.norm(vectors_array, axis=1) * np.linalg.norm(query)
-        )
+        similarities = np.dot(vectors_array, query)
 
         results = []
         for i, similarity in enumerate(similarities):
