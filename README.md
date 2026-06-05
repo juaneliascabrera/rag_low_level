@@ -1,72 +1,72 @@
 # RAG Intel x86 32-bit
 
-Sistema RAG (Retrieval-Augmented Generation) especializado en programación de bajo nivel para Intel x86 de 32 bits en Modo Protegido. Optimiza el rendimiento de LLMs en tareas de desarrollo de kernels monolíticos y sistemas embebidos, eliminando alucinaciones críticas de hardware mediante recuperación de contexto verificado.
+RAG (Retrieval-Augmented Generation) system specialized in low-level programming for Intel x86 32-bit in Protected Mode. It optimizes LLM performance on monolithic kernel development and embedded systems tasks, eliminating critical hardware hallucinations through verified context retrieval.
 
-## Características
+## Features
 
-- **Embeddings intercambiables:** Local (sentence-transformers), Ollama, OpenAI
-- **LLMs intercambiables:** Ollama local, OpenCode GO (OpenAI-compatible + Anthropic-compatible)
-- **Chunking semántico:** Parser de Markdown con YAML frontmatter, separación de bloques de código, overlap configurable
-- **Re-ranking con cross-encoder:** Mejora la precisión del retrieval
-- **HyDE (opcional):** Query transformation con documentos hipotéticos
-- **Metadata filtering:** Filtros por componente, arquitectura, modo, tipo
-- **Context budget:** Truncamiento automático para evitar overflow del LLM
-- **Caché de embeddings:** Persistencia con hash SHA256 por modelo
-- **Tests unitarios:** Cobertura de cache, vectorstore, chunker, reranker, hyde
+- **Interchangeable embeddings:** Local (sentence-transformers), Ollama, OpenAI
+- **Interchangeable LLMs:** Local Ollama, OpenCode GO (OpenAI-compatible + Anthropic-compatible)
+- **Semantic chunking:** Markdown parser with YAML frontmatter, code block separation, configurable overlap
+- **Cross-encoder re-ranking:** Improves retrieval precision
+- **HyDE (optional):** Query transformation with hypothetical documents
+- **Metadata filtering:** Filter by component, architecture, mode, type
+- **Context budget:** Automatic truncation to prevent LLM overflow
+- **Embedding cache:** Persistence with SHA256 hash per model
+- **Unit tests:** Coverage for cache, vectorstore, chunker, reranker, hyde
 
-## Tabla de contenidos
+## Table of contents
 
-1. [Requisitos previos](#requisitos-previos)
-2. [Instalación](#instalación)
-3. [Configuración](#configuración)
-4. [Estructura del proyecto](#estructura-del-proyecto)
-5. [Preparar documentos](#preparar-documentos)
-6. [Uso](#uso)
-7. [Configuración detallada por proveedor](#configuración-detallada-por-proveedor)
+1. [Prerequisites](#prerequisites)
+2. [Installation](#installation)
+3. [Configuration](#configuration)
+4. [Project structure](#project-structure)
+5. [Preparing documents](#preparing-documents)
+6. [Usage](#usage)
+7. [Detailed configuration per provider](#detailed-configuration-per-provider)
 8. [Troubleshooting](#troubleshooting)
 9. [Tests](#tests)
-10. [Conceptos cubiertos](#conceptos-cubiertos)
+10. [Concepts covered](#concepts-covered)
 
 ---
 
-## Requisitos previos
+## Prerequisites
 
 - **Python 3.10+**
-- **pip** (gestor de paquetes)
-- Proveedor de embeddings (al menos uno):
-  - `sentence-transformers` (local, sin servicios externos)
-  - Ollama corriendo localmente
-  - API key de OpenAI
-- Proveedor de LLM (al menos uno):
-  - Ollama corriendo localmente con un modelo descargado
-  - API key de OpenCode GO (o de OpenAI/Anthropic si adaptas el código)
+- **pip** (package manager)
+- At least one embedding provider:
+  - `sentence-transformers` (local, no external services)
+  - Ollama running locally
+  - OpenAI API key
+- At least one LLM provider:
+  - Ollama running locally with a downloaded model
+  - OpenCode GO API key (or OpenAI/Anthropic if you adapt the code)
 
 ---
 
-## Instalación
+## Installation
 
-### 1. Clonar el repositorio
+### 1. Clone the repository
 
 ```bash
-git clone <url-del-repo>
+git clone <repo-url>
 cd RAGIntelx86
 ```
 
-### 2. Crear entorno virtual (recomendado)
+### 2. Create a virtual environment (recommended)
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate  # Linux/macOS
-# o en Windows: venv\Scripts\activate
+# or on Windows: venv\Scripts\activate
 ```
 
-### 3. Instalar dependencias
+### 3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Para desarrollo (incluye pytest):
+For development (includes pytest):
 
 ```bash
 pip install -r requirements-dev.txt
@@ -74,31 +74,31 @@ pip install -r requirements-dev.txt
 
 ---
 
-## Configuración
+## Configuration
 
-### 1. Variables de entorno (APIs keys)
+### 1. Environment variables (API keys)
 
-Copiá el archivo de ejemplo:
+Copy the example file:
 
 ```bash
 cp .env.example .env
 ```
 
-Editá `.env` con tus API keys:
+Edit `.env` with your API keys:
 
 ```bash
-# OpenAI (opcional, solo si usás OpenAIEmbedder o el LLM de OpenAI)
+# OpenAI (optional, only if you use OpenAIEmbedder or the OpenAI LLM)
 OPENAI_API_KEY=sk-...
 
-# OpenCode GO (opcional, si usás modelos de OpenCode)
-OPENCODE_API_KEY=tu-api-key-aquí
+# OpenCode GO (optional, if you use OpenCode models)
+OPENCODE_API_KEY=your-api-key-here
 ```
 
-⚠️ **Importante:** El archivo `.env` está en `.gitignore` y **no se sube al repositorio**. Cada usuario debe crear el suyo.
+⚠️ **Important:** The `.env` file is in `.gitignore` and **is not uploaded to the repository**. Each user must create their own.
 
-### 2. Configuración del modelo (`config.py`)
+### 2. Model configuration (`config.py`)
 
-Editá `config.py` para elegir:
+Edit `config.py` to choose:
 
 #### Embedding
 
@@ -107,11 +107,11 @@ EMBEDDING_PROVIDER = "local"  # "local" | "ollama" | "openai"
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 ```
 
-| Provider | Modelos recomendados | Requisitos |
+| Provider | Recommended models | Requirements |
 |----------|---------------------|------------|
-| `local` | `all-MiniLM-L6-v2` (384d, rápido), `all-mpnet-base-v2` (768d, mejor calidad) | Ninguno (descarga automática) |
-| `ollama` | `nomic-embed-text`, `mxbai-embed-large` | Ollama corriendo local |
-| `openai` | `text-embedding-3-small` (1536d), `text-embedding-3-large` (3072d) | `OPENAI_API_KEY` en `.env` |
+| `local` | `all-MiniLM-L6-v2` (384d, fast), `all-mpnet-base-v2` (768d, better quality) | None (auto-download) |
+| `ollama` | `nomic-embed-text`, `mxbai-embed-large` | Ollama running locally |
+| `openai` | `text-embedding-3-small` (1536d), `text-embedding-3-large` (3072d) | `OPENAI_API_KEY` in `.env` |
 
 #### LLM
 
@@ -122,57 +122,57 @@ OLLAMA_BASE_URL = "http://localhost:11434"
 OPENCODE_MODEL = "kimi-k2.6"
 ```
 
-| Provider | Modelos ejemplo | Requisitos |
+| Provider | Example models | Requirements |
 |----------|----------------|------------|
-| `ollama` | `gemma4:e4b-it-qat`, `qwen2.5-coder:7b`, `deepseek-coder` | Ollama corriendo local |
-| `opencode` | `kimi-k2.6`, `glm-5.1`, `qwen3.7-max` | `OPENCODE_API_KEY` en `.env` |
+| `ollama` | `gemma4:e4b-it-qat`, `qwen2.5-coder:7b`, `deepseek-coder` | Ollama running locally |
+| `opencode` | `kimi-k2.6`, `glm-5.1`, `qwen3.7-max` | `OPENCODE_API_KEY` in `.env` |
 
-#### Parámetros de retrieval
+#### Retrieval parameters
 
 ```python
-TOP_K = 10                      # Candidatos para el reranker
-SIMILARITY_THRESHOLD = 0.3      # Umbral mínimo de similitud coseno
-RERANK_ENABLED = True            # Usar cross-encoder para re-ranking
+TOP_K = 10                      # Candidates for the reranker
+SIMILARITY_THRESHOLD = 0.3      # Minimum cosine similarity threshold
+RERANK_ENABLED = True            # Use cross-encoder for re-ranking
 RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
-RERANK_TOP_K = 3                # Resultados finales después de re-rank
-HYDE_ENABLED = False             # Query transformation con HyDE
-CONTEXT_TOKEN_BUDGET = 3000      # Tokens máximos de contexto
+RERANK_TOP_K = 3                # Final results after re-rank
+HYDE_ENABLED = False             # Query transformation with HyDE
+CONTEXT_TOKEN_BUDGET = 3000      # Maximum context tokens
 ```
 
 ---
 
-## Estructura del proyecto
+## Project structure
 
 ```
 RAGIntelx86/
-├── rag.py                    # CLI principal y orquestador
-├── config.py                 # Configuración central
-├── logger.py                 # Sistema de logging
-├── .env.example              # Plantilla de variables de entorno
+├── rag.py                    # Main CLI and orchestrator
+├── config.py                 # Central configuration
+├── logger.py                 # Logging system
+├── .env.example              # Environment variables template
 ├── .gitignore
-├── requirements.txt          # Dependencias de runtime
-├── requirements-dev.txt      # Dependencias de desarrollo
-├── README.md                 # Este archivo
-├── CONTEXT.md                # Contexto detallado del proyecto
+├── requirements.txt          # Runtime dependencies
+├── requirements-dev.txt      # Development dependencies
+├── README.md                 # This file
+├── CONTEXT.md                # Detailed project context
 ├── data/
-│   └── curated/              # Documentos .md curados (frontmatter YAML)
+│   └── curated/              # Curated .md documents (YAML frontmatter)
 ├── embedder/
-│   ├── base.py               # Interfaz abstracta Embedder
+│   ├── base.py               # Embedder abstract interface
 │   ├── local.py              # sentence-transformers local
 │   ├── ollama.py             # Ollama API
 │   ├── openai_client.py      # OpenAI API
-│   ├── cache.py              # Caché de embeddings (pickle)
+│   ├── cache.py              # Embedding cache (pickle)
 │   └── __init__.py
 ├── vectorstore/
 │   ├── store.py              # VectorStore (NumPy + JSON)
 │   └── __init__.py
 ├── chunker/
-│   ├── markdown.py           # Parser semántico con YAML + code split
+│   ├── markdown.py           # Semantic parser with YAML + code split
 │   └── __init__.py
 ├── llm/
-│   ├── base.py               # Interfaz abstracta LLMClient
-│   ├── ollama.py             # Cliente Ollama (streaming + thinking)
-│   ├── opencode.py           # Cliente OpenCode GO
+│   ├── base.py               # LLMClient abstract interface
+│   ├── ollama.py             # Ollama client (streaming + thinking)
+│   ├── opencode.py           # OpenCode GO client
 │   └── __init__.py
 ├── reranker/
 │   ├── reranker.py           # Cross-encoder re-ranking
@@ -180,14 +180,14 @@ RAGIntelx86/
 ├── retrieval/
 │   ├── hyde.py               # HyDE query transformation
 │   └── __init__.py
-├── tests/                    # Tests unitarios
+├── tests/                    # Unit tests
 │   ├── test_cache.py
 │   ├── test_chunker.py
 │   ├── test_hyde.py
 │   ├── test_reranker.py
 │   ├── test_vectorstore.py
 │   └── __init__.py
-└── storage/                  # Generado automáticamente
+└── storage/                  # Auto-generated
     ├── vectors.npy
     ├── texts.json
     ├── metadata.json
@@ -198,11 +198,11 @@ RAGIntelx86/
 
 ---
 
-## Preparar documentos
+## Preparing documents
 
-### Formato de los archivos `.md`
+### Format of `.md` files
 
-Los documentos van en `data/curated/` y deben tener **YAML frontmatter** con metadatos:
+Documents go in `data/curated/` and must have **YAML frontmatter** with metadata:
 
 ```markdown
 ---
@@ -212,107 +212,107 @@ mode: protected
 tags: [segmentation, memory, descriptors]
 ---
 
-# Título del documento
+# Document title
 
-Introducción breve...
+Brief introduction...
 
-## Sección 1
+## Section 1
 
-Contenido explicativo con texto largo...
+Explanatory content with long text...
 
 ```nasm
-; Código de ejemplo
+; Example code
 mov eax, cr0
 or eax, 1
 mov cr0, eax
 ```
 
-## Sección 2
+## Section 2
 
-Otra sección...
+Another section...
 ```
 
 ### Frontmatter
 
-| Campo | Descripción | Default |
+| Field | Description | Default |
 |-------|-------------|---------|
-| `architecture` | Arquitectura objetivo | `x86_32` |
-| `component` | Componente (GDT, IDT, paging, etc.) | Nombre del archivo |
-| `mode` | Modo de operación | `protected` |
-| `tags` | Lista de tags para filtrado | (ninguno) |
+| `architecture` | Target architecture | `x86_32` |
+| `component` | Component (GDT, IDT, paging, etc.) | Filename |
+| `mode` | Operation mode | `protected` |
+| `tags` | List of tags for filtering | (none) |
 
-### Bloques de código
+### Code blocks
 
-Los bloques de código se separan automáticamente como chunks independientes con `type: "code"` en los metadatos. Esto permite que el retrieval encuentre código relevante aunque el embedding no entienda assembler dentro de texto natural.
+Code blocks are automatically split into independent chunks with `type: "code"` in the metadata. This allows retrieval to find relevant code even though the embedding does not understand assembler inside natural text.
 
 ### Overlap
 
-El chunker agrega overlap (default 3 líneas) entre chunks **del mismo tipo** (código con código, explicación con explicación) para mantener continuidad contextual sin contaminar embeddings de un tipo con el otro.
+The chunker adds overlap (default 3 lines) between chunks **of the same type** (code with code, explanation with explanation) to maintain contextual continuity without contaminating embeddings of one type with the other.
 
 ---
 
-## Uso
+## Usage
 
-### 1. Indexar documentos
+### 1. Index documents
 
-La indexación genera embeddings de todos los `.md` en `data/curated/` y los persiste en `storage/`.
+Indexing generates embeddings for all `.md` files in `data/curated/` and persists them in `storage/`.
 
 ```bash
 python rag.py index
 ```
 
-**Output esperado:**
+**Expected output:**
 
 ```
-[INFO] embedder.local: Cargando modelo de embedding local: all-MiniLM-L6-v2
-[INFO] embedder.local: Modelo cargado. Dimensión: 384
-[INFO] Indexando 1 archivos...
-[INFO]   Procesando: GDT.md
-[INFO] chunker.markdown:   GDT.md: 19 chunks generados
-[INFO]   Generando embeddings para 19 chunks...
-[INFO]   Generando 19 embeddings nuevos...
-[INFO] Indexación completa: 19 chunks almacenados
+[INFO] embedder.local: Loading local embedding model: all-MiniLM-L6-v2
+[INFO] embedder.local: Model loaded. Dimension: 384
+[INFO] Indexing 1 files...
+[INFO]   Processing: GDT.md
+[INFO] chunker.markdown:   GDT.md: 19 chunks generated
+[INFO]   Generating embeddings for 19 chunks...
+[INFO]   Generating 19 new embeddings...
+[INFO] Indexing complete: 19 chunks stored
 ```
 
-⚠️ **Cuándo re-indexar:**
+⚠️ **When to re-index:**
 
-- Primera vez
-- Agregás o modificás documentos en `data/curated/`
-- Cambiás `EMBEDDING_PROVIDER` o `EMBEDDING_MODEL`
-- Cambiás `CHARS_PER_TOKEN` o parámetros del chunker
+- First time
+- You add or modify documents in `data/curated/`
+- You change `EMBEDDING_PROVIDER` or `EMBEDDING_MODEL`
+- You change `CHARS_PER_TOKEN` or chunker parameters
 
-⚠️ **Si cambiás el modelo de embedding, la dimensión de los vectores cambia y el sistema detecta la inconsistencia.** Vas a ver un error pidiendo re-indexar.
+⚠️ **If you change the embedding model, the vector dimension changes and the system detects the inconsistency.** You will see an error asking to re-index.
 
-### 2. Hacer consultas
+### 2. Make queries
 
 ```bash
-python rag.py query "¿Cómo configuro un descriptor de segmento en la GDT?"
+python rag.py query "How do I configure a segment descriptor in the GDT?"
 ```
 
-**Output esperado:**
+**Expected output:**
 
 ```
 ================================================================================
-RESPUESTA:
+ANSWER:
 ================================================================================
 [Thinking]
-El usuario pregunta sobre la GDT...
+The user is asking about the GDT...
 
-[Respuesta]
-Según el contexto proporcionado, un descriptor de segmento de la GDT se configura...
+[Response]
+According to the provided context, a GDT segment descriptor is configured...
 ```
 
-### 3. Debug: ver el contexto recuperado
+### 3. Debug: see the retrieved context
 
-Activá `DEBUG_SHOW_CONTEXT = True` en `config.py` para ver qué fragmentos se recuperaron y sus scores de similitud/re-ranking.
+Enable `DEBUG_SHOW_CONTEXT = True` in `config.py` to see which fragments were retrieved and their similarity/re-ranking scores.
 
 ---
 
-## Configuración detallada por proveedor
+## Detailed configuration per provider
 
-### Opción 1: Local con sentence-transformers (recomendado para empezar)
+### Option 1: Local with sentence-transformers (recommended to start)
 
-**Ventajas:** Sin servicios externos, sin API keys, funciona offline.
+**Advantages:** No external services, no API keys, works offline.
 
 ```python
 # config.py
@@ -320,13 +320,13 @@ EMBEDDING_PROVIDER = "local"
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 ```
 
-**Instalación:** Ya está en `requirements.txt` (`sentence-transformers`).
+**Installation:** Already in `requirements.txt` (`sentence-transformers`).
 
-**Primera vez:** Descarga el modelo (~80MB) automáticamente.
+**First time:** Downloads the model (~80MB) automatically.
 
-### Opción 2: Ollama (local con Ollama)
+### Option 2: Ollama (local with Ollama)
 
-**Ventajas:** Control total, múltiples modelos disponibles.
+**Advantages:** Full control, multiple models available.
 
 ```python
 # config.py
@@ -335,40 +335,40 @@ EMBEDDING_MODEL = "nomic-embed-text"
 OLLAMA_BASE_URL = "http://localhost:11434"
 ```
 
-**Requisitos:**
-1. Instalar Ollama: https://ollama.com/download
-2. Descargar el modelo de embedding:
+**Requirements:**
+1. Install Ollama: https://ollama.com/download
+2. Download the embedding model:
    ```bash
    ollama pull nomic-embed-text
    ```
-3. (Opcional) Descargar el modelo de LLM:
+3. (Optional) Download the LLM model:
    ```bash
    ollama pull gemma4:e4b-it-qat
    ```
 
-**Uso:**
+**Usage:**
 ```python
 LLM_PROVIDER = "ollama"
 OLLAMA_MODEL = "gemma4:e4b-it-qat"
 ```
 
-### Opción 3: OpenAI (embeddings y/o LLM)
+### Option 3: OpenAI (embeddings and/or LLM)
 
-**Ventajas:** Modelos de alta calidad.
+**Advantages:** High quality models.
 
 ```python
 # config.py
 EMBEDDING_PROVIDER = "openai"
 EMBEDDING_MODEL = "text-embedding-3-small"
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")  # En .env
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")  # In .env
 ```
 
-⚠️ **Nota:** El código actual tiene `OpenAIEmbedder` pero el LLM client de OpenAI no está implementado. Solo OpenCode y Ollama están soportados como LLM. Si querés usar OpenAI como LLM, necesitás adaptar `llm/opencode.py` o crear `llm/openai.py`.
+⚠️ **Note:** The current code has `OpenAIEmbedder` but the OpenAI LLM client is not implemented. Only OpenCode and Ollama are supported as LLM. If you want to use OpenAI as the LLM, you need to adapt `llm/opencode.py` or create `llm/openai.py`.
 
-### Opción 4: OpenCode GO (modelos de OpenCode)
+### Option 4: OpenCode GO (OpenCode models)
 
-**Ventajas:** Acceso a modelos como Kimi, GLM, Qwen, etc. sin infraestructura.
+**Advantages:** Access to models like Kimi, GLM, Qwen, etc. without infrastructure.
 
 ```python
 # config.py
@@ -376,118 +376,118 @@ LLM_PROVIDER = "opencode"
 OPENCODE_MODEL = "kimi-k2.6"
 ```
 
-**Requisitos:**
-1. API key de OpenCode GO en `.env`:
+**Requirements:**
+1. OpenCode GO API key in `.env`:
    ```
-   OPENCODE_API_KEY=tu-api-key
+   OPENCODE_API_KEY=your-api-key
    ```
 
-**Modelos disponibles:**
+**Available models:**
 
-| Modelo | Tipo de API |
-|--------|-------------|
+| Model | API type |
+|-------|----------|
 | `kimi-k2.6`, `kimi-k2.5`, `glm-5.1`, `glm-5`, `deepseek-v4-pro`, `deepseek-v4-flash`, `mimo-v2.5`, `mimo-v2.5-pro` | OpenAI-compatible |
 | `qwen3.7-max`, `qwen3.7-plus`, `qwen3.6-plus`, `minimax-m3`, `minimax-m2.7`, `minimax-m2.5` | Anthropic-compatible |
 
-El cliente detecta automáticamente qué formato usar según el modelo.
+The client automatically detects which format to use based on the model.
 
 ---
 
 ## Troubleshooting
 
-### Error: "Dimensión de vectores almacenados no coincide"
+### Error: "Stored vector dimension does not match"
 
-**Causa:** Cambiaste el modelo de embedding sin re-indexar.
+**Cause:** You changed the embedding model without re-indexing.
 
-**Solución:**
+**Solution:**
 ```bash
 python rag.py index
 ```
 
-### Error: "No se pudo conectar a Ollama"
+### Error: "Could not connect to Ollama"
 
-**Causa:** Ollama no está corriendo.
+**Cause:** Ollama is not running.
 
-**Solución:**
+**Solution:**
 ```bash
-# Verificar si Ollama está corriendo
+# Check if Ollama is running
 curl http://localhost:11434/api/tags
 
-# Si no está, iniciarlo
+# If not, start it
 ollama serve
 ```
 
-### Error: "API key inválida para OpenCode"
+### Error: "Invalid OpenCode API key"
 
-**Causa:** `OPENCODE_API_KEY` no está configurada o es incorrecta.
+**Cause:** `OPENCODE_API_KEY` is not configured or is incorrect.
 
-**Solución:**
-1. Verificá que `.env` exista y tenga la key
-2. Verificá que la key sea válida
-3. Recargá el entorno: `source venv/bin/activate`
+**Solution:**
+1. Verify that `.env` exists and contains the key
+2. Verify that the key is valid
+3. Reload the environment: `source venv/bin/activate`
 
-### La query tarda mucho en empezar a responder
+### The query takes a long time to start responding
 
-**Causa:** El modelo está "pensando" (thinking). Los modelos con razonamiento como `qwen3.7-max` generan tokens de thinking antes de la respuesta.
+**Cause:** The model is "thinking". Models with reasoning like `qwen3.7-max` generate thinking tokens before the response.
 
-**Solución:** Esperá. El output por stderr muestra el thinking en tiempo real.
+**Solution:** Wait. The stderr output shows the thinking in real time.
 
-### Los resultados no son relevantes
+### Results are not relevant
 
-**Causas posibles:**
-1. **Modelo de embedding muy básico:** `all-MiniLM-L6-v2` es generalista. Probá con un modelo más grande o multilingüe.
-2. **Threshold muy alto/bajo:** Ajustá `SIMILARITY_THRESHOLD` en `config.py`.
-3. **Documentos mal curados:** Verificá que los `.md` tengan frontmatter correcto y contenido técnico claro.
-4. **Re-ranking deshabilitado:** Activá `RERANK_ENABLED = True` para mejorar precisión.
+**Possible causes:**
+1. **Embedding model too basic:** `all-MiniLM-L6-v2` is general-purpose. Try a larger or multilingual model.
+2. **Threshold too high/low:** Adjust `SIMILARITY_THRESHOLD` in `config.py`.
+3. **Poorly curated documents:** Verify that the `.md` files have correct frontmatter and clear technical content.
+4. **Re-ranking disabled:** Enable `RERANK_ENABLED = True` to improve precision.
 
-### El contexto excede el budget del LLM
+### The context exceeds the LLM budget
 
-**Causa:** Los chunks son muy largos o hay muchos.
+**Cause:** The chunks are too long or there are too many.
 
-**Solución:**
-- Reducí `TOP_K` (menos candidatos)
-- Reducí `RERANK_TOP_K` (menos resultados finales)
-- Ajustá `CONTEXT_TOKEN_BUDGET` según el modelo
+**Solution:**
+- Reduce `TOP_K` (fewer candidates)
+- Reduce `RERANK_TOP_K` (fewer final results)
+- Adjust `CONTEXT_TOKEN_BUDGET` according to the model
 
 ---
 
 ## Tests
 
 ```bash
-# Instalar dependencias de desarrollo
+# Install development dependencies
 pip install -r requirements-dev.txt
 
-# Correr todos los tests
+# Run all tests
 pytest tests/
 
-# Con verbose
+# With verbose
 pytest tests/ -v
 
-# Test específico
+# Specific test
 pytest tests/test_chunker.py -v
 ```
 
-**Cobertura actual:**
-- `test_cache.py`: Caché de embeddings (4 tests)
-- `test_chunker.py`: Parser de Markdown (5 tests)
+**Current coverage:**
+- `test_cache.py`: Embedding cache (4 tests)
+- `test_chunker.py`: Markdown parser (5 tests)
 - `test_hyde.py`: HyDE transformer (2 tests)
-- `test_reranker.py`: Cross-encoder reranker (3 tests, con mock)
+- `test_reranker.py`: Cross-encoder reranker (3 tests, mocked)
 - `test_vectorstore.py`: VectorStore (5 tests)
 
-**19/19 tests pasan.**
+**19/19 tests pass.**
 
 ---
 
-## Conceptos cubiertos
+## Concepts covered
 
-- **Arquitectura:** Intel x86 32-bit, Modo Protegido
-- **Estructuras:** GDT (Global Descriptor Table), IDT (Interrupt Descriptor Table)
-- **Gestión de memoria:** Paginación, Page Directory, Page Tables
-- **Registros de control:** CR0, CR2, CR3
-- **Instrucciones de sistema:** `lgdt`, `lidt`, `iret`, `cli`, `sti`, `in/out`, manipulación de EFLAGS
+- **Architecture:** Intel x86 32-bit, Protected Mode
+- **Structures:** GDT (Global Descriptor Table), IDT (Interrupt Descriptor Table)
+- **Memory management:** Paging, Page Directory, Page Tables
+- **Control registers:** CR0, CR2, CR3
+- **System instructions:** `lgdt`, `lidt`, `iret`, `cli`, `sti`, `in/out`, EFLAGS manipulation
 
 ---
 
-## Licencia
+## License
 
 Open Source

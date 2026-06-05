@@ -91,7 +91,7 @@ class VectorStore:
         with open(self.storage_dir / "config.json", 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2)
 
-        logger.info(f"VectorStore guardado: {len(self.texts)} vectores en {self.storage_dir}")
+        logger.info(f"VectorStore saved: {len(self.texts)} vectors in {self.storage_dir}")
 
     def load(self):
         vectors_path = self.storage_dir / "vectors.npy"
@@ -111,16 +111,16 @@ class VectorStore:
 
         if self.vectors.size > 0 and self.vectors.shape[1] != self.dimension:
             raise ValueError(
-                f"Dimensión de vectores almacenados ({self.vectors.shape[1]}) "
-                f"no coincide con el embedder actual ({self.dimension}). "
-                f"Ejecutá 'python rag.py index' para re-indexar."
+                f"Stored vector dimension ({self.vectors.shape[1]}) "
+                f"does not match the current embedder ({self.dimension}). "
+                f"Run 'python rag.py index' to re-index."
             )
 
-        logger.info(f"VectorStore cargado: {len(self.texts)} vectores")
+        logger.info(f"VectorStore loaded: {len(self.texts)} vectors")
 
     def clear(self):
         self.vectors = np.array([])
         self.texts = []
         self.metadata = []
         self._pending_vectors = []
-        logger.info("VectorStore limpiado")
+        logger.info("VectorStore cleared")

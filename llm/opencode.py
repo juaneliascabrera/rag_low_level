@@ -50,8 +50,8 @@ class OpenCodeClient(LLMClient):
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 401:
-                logger.error("API key inválida para OpenCode")
-                raise RuntimeError("API key inválida para OpenCode")
+                logger.error("Invalid OpenCode API key")
+                raise RuntimeError("Invalid OpenCode API key")
             raise
 
         full_response = ""
@@ -116,8 +116,8 @@ class OpenCodeClient(LLMClient):
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 401:
-                logger.error("API key inválida para OpenCode")
-                raise RuntimeError("API key inválida para OpenCode")
+                logger.error("Invalid OpenCode API key")
+                raise RuntimeError("Invalid OpenCode API key")
             raise
 
         full_response = ""

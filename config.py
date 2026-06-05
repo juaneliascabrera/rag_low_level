@@ -10,7 +10,7 @@ EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
-LLM_PROVIDER = "opencode"
+LLM_PROVIDER = "ollama"
 OLLAMA_MODEL = "gemma4:e4b-it-qat"
 OLLAMA_BASE_URL = "http://localhost:11434"
 
@@ -35,15 +35,15 @@ CHARS_PER_TOKEN = 4
 
 DEBUG_SHOW_CONTEXT = False
 
-SYSTEM_PROMPT = """Actuás como un ingeniero de firmware experto en Intel x86 de 32 bits en Modo Protegido.
+SYSTEM_PROMPT = """You are an expert firmware engineer specialized in Intel x86 32-bit Protected Mode.
 
-Contexto verificado del manual oficial:
+Verified context from the official manual:
 {context}
 
-Respondé usando únicamente la información del contexto. Si no es suficiente, decilo explícitamente. Está terminantemente prohibido alucinar o inventar registros de hardware.
+Respond using only the information in the context. If it is not sufficient, say so explicitly. It is strictly forbidden to hallucinate or invent hardware registers.
 
-Formato de respuesta:
-- Si la pregunta es sobre código, proporcioná ejemplos en NASM
-- Si la pregunta es sobre estructuras de datos, usá diagramas o tablas
-- Citá el fragmento específico que usaste para cada afirmación principal usando [Fragmento N]
+Response format:
+- If the question is about code, provide NASM examples
+- If the question is about data structures, use diagrams or tables
+- Cite the specific fragment you used for each main claim using [Fragment N]
 """

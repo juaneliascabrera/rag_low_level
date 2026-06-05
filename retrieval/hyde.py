@@ -8,14 +8,14 @@ class HyDETransformer:
         self.llm = llm_client
 
     def transform(self, query: str) -> str:
-        prompt = """Generá un documento técnico hipotético que responda esta pregunta sobre arquitectura x86 de 32 bits en Modo Protegido. El documento debe ser preciso y técnico, como si fuera extraído de un manual de Intel.
+        prompt = """Generate a hypothetical technical document that answers this question about Intel x86 32-bit architecture in Protected Mode. The document must be accurate and technical, as if it were extracted from an Intel manual.
 
-Pregunta: {query}
+Question: {query}
 
-Documento técnico:"""
+Technical document:"""
 
-        system_prompt = "Sos un experto en arquitectura x86 de 32 bits. Generá documentación técnica precisa y concisa."
+        system_prompt = "You are an expert in x86 32-bit architecture. Generate accurate and concise technical documentation."
 
         hypothetical_doc = self.llm.generate(system_prompt, prompt.format(query=query), silent=True)
-        logger.info(f"HyDE: Query transformada en documento hipotético ({len(hypothetical_doc)} chars)")
+        logger.info(f"HyDE: Query transformed into hypothetical document ({len(hypothetical_doc)} chars)")
         return hypothetical_doc

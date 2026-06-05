@@ -58,7 +58,7 @@ class MarkdownChunker:
         pattern = r'^(#{1,4})\s+(.+)$'
         lines = body.split('\n')
         sections = []
-        current_section = {"heading": "Introducción", "level": 0, "content": []}
+        current_section = {"heading": "Introduction", "level": 0, "content": []}
         in_code_block = False
 
         for line in lines:
@@ -115,7 +115,7 @@ class MarkdownChunker:
                     "language": lang or "text"
                 }
                 chunks.append({
-                    "text": f"## {heading} - Código\n```{lang}\n{code}\n```",
+                    "text": f"## {heading} - Code\n```{lang}\n{code}\n```",
                     "metadata": code_metadata
                 })
         else:
@@ -167,7 +167,7 @@ class MarkdownChunker:
             if len(text) < 50:
                 continue
 
-            if chunk["metadata"].get("section") == "Introducción":
+            if chunk["metadata"].get("section") == "Introduction":
                 lines = text.split('\n')
                 if len(lines) <= 3 and not any('```' in line for line in lines):
                     continue

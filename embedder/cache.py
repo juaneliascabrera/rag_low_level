@@ -22,15 +22,15 @@ class EmbeddingCache:
         if self.cache_file.exists():
             with open(self.cache_file, 'rb') as f:
                 self.cache = pickle.load(f)
-            logger.info(f"Caché de embeddings cargado: {len(self.cache)} entradas")
+            logger.info(f"Embedding cache loaded: {len(self.cache)} entries")
         else:
-            logger.info("Caché de embeddings vacío")
+            logger.info("Embedding cache is empty")
 
     def save(self):
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         with open(self.cache_file, 'wb') as f:
             pickle.dump(self.cache, f)
-        logger.info(f"Caché de embeddings guardado: {len(self.cache)} entradas")
+        logger.info(f"Embedding cache saved: {len(self.cache)} entries")
 
     def get(self, text: str) -> list[float] | None:
         key = self._hash(text)
@@ -42,4 +42,4 @@ class EmbeddingCache:
 
     def clear(self):
         self.cache = {}
-        logger.info("Caché de embeddings limpiado")
+        logger.info("Embedding cache cleared")

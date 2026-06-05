@@ -49,7 +49,7 @@ class TestVectorStore:
             
             store2 = VectorStore(dimension=5, storage_dir=tmpdir)
             
-            with pytest.raises(ValueError, match="Dimensión"):
+            with pytest.raises(ValueError, match="Stored vector dimension"):
                 store2.load()
 
     def test_normalization(self):

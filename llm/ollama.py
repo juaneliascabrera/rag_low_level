@@ -33,11 +33,11 @@ class OllamaClient(LLMClient):
             )
             response.raise_for_status()
         except requests.exceptions.ConnectionError:
-            logger.error(f"No se pudo conectar a Ollama en {self.base_url}")
-            raise RuntimeError(f"Ollama no está corriendo en {self.base_url}")
+            logger.error(f"Could not connect to Ollama at {self.base_url}")
+            raise RuntimeError(f"Ollama is not running at {self.base_url}")
         except requests.exceptions.Timeout:
-            logger.error("Timeout al conectar con Ollama")
-            raise RuntimeError("Timeout al conectar con Ollama (300s)")
+            logger.error("Timeout while connecting to Ollama")
+            raise RuntimeError("Timeout while connecting to Ollama (300s)")
 
         full_response = ""
         thinking_started = False

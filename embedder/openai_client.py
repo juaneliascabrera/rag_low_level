@@ -16,7 +16,7 @@ class OpenAIEmbedder(Embedder):
         self.api_key = api_key
         self.model_name = model_name
         self._dimension = MODEL_DIMENSIONS.get(model_name, 1536)
-        logger.info(f"Inicializando OpenAIEmbedder: {model_name} (dimensión: {self._dimension})")
+        logger.info(f"Initializing OpenAIEmbedder: {model_name} (dimension: {self._dimension})")
 
     def embed(self, text: str) -> list[float]:
         try:
@@ -36,15 +36,15 @@ class OpenAIEmbedder(Embedder):
             return response.json()["data"][0]["embedding"]
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 401:
-                logger.error("API key inválida para OpenAI")
-                raise RuntimeError("API key inválida para OpenAI")
+                logger.error("Invalid OpenAI API key")
+                raise RuntimeError("Invalid OpenAI API key")
             raise
         except requests.exceptions.Timeout:
-            logger.error("Timeout al generar embedding con OpenAI")
-            raise RuntimeError("Timeout al generar embedding con OpenAI")
+            logger.error("Timeout while generating embedding with OpenAI")
+            raise RuntimeError("Timeout while generating embedding with OpenAI")
 
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        logger.info(f"Generando {len(texts)} embeddings con OpenAI (batch)")
+        logger.info(f"Generating {len(texts)} embeddings with OpenAI (batch)")
         try:
             response = requests.post(
                 "https://api.openai.com/v1/embeddings",
@@ -63,8 +63,8 @@ class OpenAIEmbedder(Embedder):
             return [item["embedding"] for item in sorted(data, key=lambda x: x["index"])]
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 401:
-                logger.error("API key inválida para OpenAI")
-                raise RuntimeError("API key inválida para OpenAI")
+                logger.error("Invalid OpenAI API key")
+                raise RuntimeError("Invalid OpenAI API key")
             raise
 
     def dimension(self) -> int:

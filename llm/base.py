@@ -13,7 +13,7 @@ class LLMClient(ABC):
 
     def _print_response_header(self, silent: bool = False):
         if not silent:
-            print("\n\n[Respuesta]", file=sys.stderr)
+            print("\n\n[Response]", file=sys.stderr)
 
     def _print_token(self, token: str, to_stderr: bool = False, silent: bool = False):
         if silent:

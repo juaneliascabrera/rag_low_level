@@ -1,112 +1,112 @@
-# Contexto del Proyecto: RAG Especializado en Bajo Nivel (Intel x86 32-bits)
+# Project Context: RAG Specialized in Low-Level (Intel x86 32-bit)
 
-> **Fecha:** 2026-06-05  
-> **Objetivo:** Centralizar el contexto, desafíos técnicos, arquitectura sugerida y hoja de ruta para el desarrollo de un sistema RAG de código abierto enfocado en optimizar el rendimiento de LLMs en tareas de programación de bajo nivel, desarrollo de kernels monolíticos y sistemas embebidos.
-
----
-
-## 1. Planteamiento del Problema
-
-Los LLMs comerciales y genéricos demuestran un rendimiento deficiente al interactuar con el hardware o escribir código en Assembler debido a:
-
-- **Escasez de Datos de Entrenamiento:** El volumen de código en ensamblador público y moderno en plataformas como GitHub es astronómicamente menor en comparación con lenguajes de alto nivel (Python, JavaScript, C++).
-- **Ausencia de Contexto Físico:** Los modelos carecen de comprensión inherente sobre mapas de memoria, temporizaciones, estados de pines o la distribución exacta de registros de control específicos.
-- **Dependencia Absoluta de la Arquitectura:** El código varía drásticamente según la arquitectura física (Intel x86, ARM, RISC-V, AVR). Mezclar convenciones sintácticas o registros inexistentes deriva en fallas críticas del sistema (Triple Faults, Kernel Panics).
-
-> En el desarrollo de bajo nivel, la precisión es binaria: un bit incorrecto en un registro de control anula la viabilidad de todo el sistema operativo o firmware.
+> **Date:** 2026-06-05  
+> **Goal:** Centralize the context, technical challenges, suggested architecture, and roadmap for developing an open-source RAG system focused on optimizing LLM performance in low-level programming tasks, monolithic kernel development, and embedded systems.
 
 ---
 
-## 2. Alcance Inicial del Proyecto (MVP)
+## 1. Problem Statement
 
-Para garantizar la viabilidad y precisión del sistema, el alcance inicial se delimita estrictamente a:
+Commercial and generic LLMs demonstrate poor performance when interacting with hardware or writing Assembler code due to:
 
-- **Arquitectura Objetivo:** Intel x86 de 32 bits (Arquitectura educativa/experimental clásica y desarrollo de kernels monolíticos en Modo Protegido).
-- **Conceptos Críticos a Cubrir:**
-  * Inicialización y estructuras del sistema: **GDT** (Global Descriptor Table), **IDT** (Interrupt Descriptor Table).
-  * Gestión de Memoria: **Paginación básica**, Page Directory, Page Tables, registros de control (**CR0, CR2, CR3**).
-  * Set de Instrucciones de Sistema: `lgdt`, `lidt`, `iret`, `cli`, `sti`, `in/out`, manipulación de **EFLAGS**.
+- **Scarcity of Training Data:** The volume of modern, public assembler code on platforms like GitHub is astronomically smaller compared to high-level languages (Python, JavaScript, C++).
+- **Absence of Physical Context:** The models lack inherent understanding of memory maps, timings, pin states, or the exact distribution of specific control registers.
+- **Absolute Architecture Dependence:** Code varies drastically depending on the physical architecture (Intel x86, ARM, RISC-V, AVR). Mixing syntactic conventions or non-existent registers leads to critical system failures (Triple Faults, Kernel Panics).
+
+> In low-level development, precision is binary: a single incorrect bit in a control register voids the viability of the entire operating system or firmware.
 
 ---
 
-## 3. Arquitectura del Sistema RAG
+## 2. Initial Project Scope (MVP)
 
-El sistema se compone de tres módulos core distribuidos localmente para garantizar la privacidad y el funcionamiento offline del desarrollador:
+To guarantee the system's viability and accuracy, the initial scope is strictly limited to:
+
+- **Target Architecture:** Intel x86 32-bit (Classic educational/experimental architecture and monolithic kernel development in Protected Mode).
+- **Critical Concepts to Cover:**
+  * System initialization and structures: **GDT** (Global Descriptor Table), **IDT** (Interrupt Descriptor Table).
+  * Memory Management: **Basic Paging**, Page Directory, Page Tables, control registers (**CR0, CR2, CR3**).
+  * System Instruction Set: `lgdt`, `lidt`, `iret`, `cli`, `sti`, `in/out`, **EFLAGS** manipulation.
+
+---
+
+## 3. RAG System Architecture
+
+The system is composed of three core modules distributed locally to guarantee the developer's privacy and offline operation:
 
 ```
-[ Manuales Técnicos / PDFs ] --> [ Parser de Ingesta ] --> [ Fragmentación Semántica ]
-                                                                     │
-                                                                     ▼
-[ LLM Local via Ollama ] <-- [ Orquestador de Prompts ] <-- [ Base Vectorial (ChromaDB) ]
+[ Technical Manuals / PDFs ] --> [ Ingestion Parser ] --> [ Semantic Fragmentation ]
+                                                            │
+                                                            ▼
+[ Local LLM via Ollama ] <-- [ Prompt Orchestrator ] <-- [ Vector Database (ChromaDB) ]
 ```
 
-### 3.A. Módulo de Ingesta y Parser Especializado (`src/parser/`)
+### 3.A. Specialized Ingestion and Parser Module (`src/parser/`)
 
-Los manuales técnicos oficiales (como el *Intel Architecture Software Developer's Manual, Volume 3*) presentan estructuras tabulares complejas que los extractores de texto plano rompen fácilmente.
+Official technical manuals (such as the *Intel Architecture Software Developer's Manual, Volume 3*) present complex tabular structures that plain text extractors break easily.
 
-- **Función:** Parsear páginas seleccionadas de la documentación oficial convirtiendo diagramas de bits y tablas de registros a formatos estructurados limpios (Markdown o JSON).
-- **Herramientas sugeridas:** PyMuPDF, Marker, o modelos locales de visión de maquetación.
+- **Function:** Parse selected pages of the official documentation, converting bit diagrams and register tables into clean structured formats (Markdown or JSON).
+- **Suggested tools:** PyMuPDF, Marker, or local layout-vision models.
 
-### 3.B. Base de Conocimiento Vectorial y Chunking (`src/embedder/`)
+### 3.B. Vector Knowledge Base and Chunking (`src/embedder/`)
 
-La fragmentación tradicional basada en conteo de caracteres destruye la semántica de bajo nivel.
+Traditional character-count-based fragmentation destroys low-level semantics.
 
-- **Estrategia de Chunking:** Fragmentación semántica indivisible por estructuras de hardware. Por ejemplo, la descripción completa de un descriptor de segmento de la GDT (Base, Límite, Acceso, DPL) debe permanecer en un único chunk con sus metadatos asociados.
-- **Estructura de Metadatos:** Cada vector se almacena con etiquetas explícitas:
+- **Chunking Strategy:** Indivisible semantic fragmentation by hardware structures. For example, the complete description of a GDT segment descriptor (Base, Limit, Access, DPL) must remain in a single chunk with its associated metadata.
+- **Metadata Structure:** Each vector is stored with explicit labels:
 
 ```json
 {
-  "arquitectura": "x86_32",
-  "componente": "IDT",
-  "tipo_informacion": "estructura_byte",
-  "modo": "protegido"
+  "architecture": "x86_32",
+  "component": "IDT",
+  "information_type": "byte_structure",
+  "mode": "protected"
 }
 ```
 
-- **Almacenamiento:** Base de datos vectorial local y ligera como ChromaDB, FAISS o LanceDB.
+- **Storage:** Lightweight local vector database such as ChromaDB, FAISS, or LanceDB.
 
-### 3.C. Cliente de Orquestación e Inyección de Prompt (`src/llm_client/`)
+### 3.C. Orchestration Client and Prompt Injection (`src/llm_client/`)
 
-Encargado de interceptar la consulta del desarrollador, realizar la búsqueda semántica e inyectar el contexto bajo reglas estrictas de control.
+Responsible for intercepting the developer's query, performing semantic search, and injecting context under strict control rules.
 
-- **Prompt del Sistema Sugerido:**
+- **Suggested System Prompt:**
 
-> "Actúa como un ingeniero de firmware y arquitecto de sistemas operativos experto en Intel x86 de 32 bits en Modo Protegido. Se te proporciona un fragmento textual verificado del manual de referencia oficial. Utilizando únicamente las direcciones de memoria, estructuras y nombres de registros presentes en el contexto, genera el código solicitado. Si la información no es suficiente, indícalo explícitamente; está terminantemente prohibido alucinar o inventar registros de hardware."
-
----
-
-## 4. Hoja de Ruta para Desarrollo Open-Source
-
-### Fase 1: Preparación del Dataset Semilla
-- Extraer y limpiar de forma manual/semi-asistida las secciones del manual de Intel correspondientes al establecimiento de la GDT, IDT y activación de la paginación. Crear el repositorio inicial con estos archivos estructurados.
-
-### Fase 2: Pipeline de Vectores Local
-- Desarrollar el script de Python para automatizar la generación de embeddings y el almacenamiento en ChromaDB.
-
-### Fase 3: Interfaz de Usuario e Integración
-- Diseñar una interfaz de línea de comandos (CLI) que permita realizar consultas directamente desde la terminal de desarrollo e interactuar con modelos locales de código a través de Ollama (ej. qwen2.5-coder, deepseek-coder).
-
-### Fase 4: Agente con Bucle de Compilación (Futuro)
-- Conectar el generador con herramientas como `nasm` o `gcc` para capturar errores de sintaxis en caliente, permitiendo que el LLM se autocorrija antes de entregar el código final.
+> "Act as an expert firmware engineer and operating system architect specialized in Intel x86 32-bit Protected Mode. You are provided with a verified textual fragment from the official reference manual. Using only the memory addresses, structures, and register names present in the context, generate the requested code. If the information is not sufficient, state so explicitly; it is strictly forbidden to hallucinate or invent hardware registers."
 
 ---
 
-## 5. Estructura de Directorios Sugerida
+## 4. Open-Source Development Roadmap
+
+### Phase 1: Seed Dataset Preparation
+- Manually/semi-assisted extraction and cleaning of the Intel manual sections corresponding to the GDT, IDT setup, and paging activation. Create the initial repository with these structured files.
+
+### Phase 2: Local Vector Pipeline
+- Develop the Python script to automate embedding generation and storage in ChromaDB.
+
+### Phase 3: User Interface and Integration
+- Design a command-line interface (CLI) that allows queries directly from the development terminal and interacts with local code models through Ollama (e.g. qwen2.5-coder, deepseek-coder).
+
+### Phase 4: Agent with Compilation Loop (Future)
+- Connect the generator with tools like `nasm` or `gcc` to capture syntax errors in real-time, allowing the LLM to self-correct before delivering the final code.
+
+---
+
+## 5. Suggested Directory Structure
 
 ```
 .
 ├── src/
-│   ├── parser/          # Módulo de ingesta y parseo de documentación técnica
-│   ├── embedder/        # Módulo de chunking semántico y generación de embeddings
-│   └── llm_client/      # Módulo de orquestación de prompts y consulta a LLM local
+│   ├── parser/          # Ingestion and parsing module for technical documentation
+│   ├── embedder/        # Semantic chunking and embedding generation module
+│   └── llm_client/      # Prompt orchestration and local LLM query module
 ├── data/
-│   ├── raw/             # Manuales técnicos en PDF
-│   └── processed/       # Texto estructurado extraído (Markdown/JSON)
-├── chroma_db/           # Base de datos vectorial local
-├── CONTEXT.md           # Este archivo
-└── README.md            # Documentación del proyecto
+│   ├── raw/             # Technical manuals in PDF
+│   └── processed/       # Extracted structured text (Markdown/JSON)
+├── chroma_db/           # Local vector database
+├── CONTEXT.md           # This file
+└── README.md            # Project documentation
 ```
 
 ---
 
-*Documento generado a partir del análisis del contexto inicial del proyecto.*
+*Document generated from the analysis of the initial project context.*
