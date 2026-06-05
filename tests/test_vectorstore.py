@@ -57,6 +57,7 @@ class TestVectorStore:
             store = VectorStore(dimension=3, storage_dir=tmpdir)
             
             store.add([2.0, 0.0, 0.0], "text1", {})
+            store._flush_pending()
             
             norm = np.linalg.norm(store.vectors[0])
             assert abs(norm - 1.0) < 1e-6

@@ -21,7 +21,7 @@ DATA_DIR = "data/curated"
 STORAGE_DIR = "storage"
 CACHE_DIR = "storage/cache"
 
-TOP_K = 3
+TOP_K = 10
 SIMILARITY_THRESHOLD = 0.3
 
 RERANK_ENABLED = True
@@ -29,6 +29,9 @@ RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 RERANK_TOP_K = 3
 
 HYDE_ENABLED = False
+
+CONTEXT_TOKEN_BUDGET = 3000
+CHARS_PER_TOKEN = 4
 
 DEBUG_SHOW_CONTEXT = False
 

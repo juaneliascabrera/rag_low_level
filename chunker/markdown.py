@@ -142,10 +142,16 @@ class MarkdownChunker:
         result = [chunks[0]]
 
         for i in range(1, len(chunks)):
-            prev_lines = chunks[i-1]["text"].split('\n')
-            overlap_text = '\n'.join(prev_lines[-self.overlap_lines:])
+            prev_type = chunks[i-1]["metadata"].get("type")
+            curr_type = chunks[i]["metadata"].get("type")
 
-            new_text = f"{overlap_text}\n\n{chunks[i]['text']}"
+            if prev_type == curr_type:
+                prev_lines = chunks[i-1]["text"].split('\n')
+                overlap_text = '\n'.join(prev_lines[-self.overlap_lines:])
+                new_text = f"{overlap_text}\n\n{chunks[i]['text']}"
+            else:
+                new_text = chunks[i]["text"]
+
             result.append({
                 "text": new_text,
                 "metadata": chunks[i]["metadata"]

@@ -15,6 +15,10 @@ logger = get_logger(__name__)
 
 class RAGSystem:
     def __init__(self):
+        if config.RERANK_ENABLED and config.RERANK_TOP_K > config.TOP_K:
+            raise ValueError(
+                f"RERANK_TOP_K ({config.RERANK_TOP_K}) no puede ser mayor que TOP_K ({config.TOP_K})"
+            )
         self.embedder = self._create_embedder()
         self.store = VectorStore(self.embedder.dimension(), config.STORAGE_DIR)
         self.chunker = MarkdownChunker()
@@ -136,10 +140,18 @@ class RAGSystem:
             results = reranker.rerank(question, results, config.RERANK_TOP_K)
 
         context_parts = []
+        total_tokens = 0
         for i, result in enumerate(results, 1):
-            context_parts.append(f"[Fragmento {i}] (similitud: {result['similarity']:.2f})\n{result['text']}")
+            fragment = f"[Fragmento {i}] (similitud: {result['similarity']:.2f})\n{result['text']}"
+            fragment_tokens = len(fragment) // config.CHARS_PER_TOKEN
+            if total_tokens + fragment_tokens > config.CONTEXT_TOKEN_BUDGET:
+                logger.warning(f"Context budget alcanzado: {total_tokens} tokens, truncando en fragmento {i}")
+                break
+            context_parts.append(fragment)
+            total_tokens += fragment_tokens
 
         context = "\n\n".join(context_parts)
+        logger.info(f"Contexto: {len(context_parts)} fragmentos, ~{total_tokens} tokens")
         system_prompt = config.SYSTEM_PROMPT.format(context=context)
 
         response = self.llm.generate(system_prompt, question)
