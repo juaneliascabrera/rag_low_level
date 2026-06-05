@@ -69,7 +69,7 @@ class RAGSystem:
     def query(self, question: str) -> str:
         self.store.load()
 
-        if not self.store.vectors:
+        if self.store.vectors.size == 0:
             return "Error: Base de datos vacía. Ejecutá 'python rag.py index' primero."
 
         query_vector = self.embedder.embed(question)
