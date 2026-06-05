@@ -25,6 +25,7 @@ wheels/
 
 # Base de datos vectorial
 chroma_db/
+storage/
 *.db
 *.sqlite
 *.sqlite3

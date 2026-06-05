@@ -185,6 +185,7 @@
   },
   "active": "d4db8b0d3d80d878",
   "lastOpenFiles": [
+    "data/curated/GDT.md",
     "rag.py",
     "llm/ollama.py",
     "vectorstore/store.py",
@@ -195,7 +196,6 @@
     "embedder/base.py",
     "config.py",
     "llm/__init__.py",
-    "chunker/__init__.py",
     "README.md"
   ]
 }
