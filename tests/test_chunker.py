@@ -9,7 +9,7 @@ class TestMarkdownChunker:
         with tempfile.TemporaryDirectory() as tmpdir:
             md_file = os.path.join(tmpdir, "test.md")
             with open(md_file, 'w') as f:
-                f.write("# Title\nIntro\n## Section 1\nContent 1\n## Section 2\nContent 2")
+                f.write("# Title\nIntro\n## Section 1\nContent for section 1 with enough text to pass filter\n## Section 2\nContent for section 2 with enough text to pass filter")
             
             chunker = MarkdownChunker(overlap_lines=0)
             chunks = chunker.chunk(md_file)
@@ -20,7 +20,7 @@ class TestMarkdownChunker:
         with tempfile.TemporaryDirectory() as tmpdir:
             md_file = os.path.join(tmpdir, "test.md")
             with open(md_file, 'w') as f:
-                f.write("---\narchitecture: x86_32\ncomponent: GDT\n---\n# Title\nContent")
+                f.write("---\narchitecture: x86_32\ncomponent: GDT\n---\n# Title\nContent for the section with enough text to pass the filter")
             
             chunker = MarkdownChunker(overlap_lines=0)
             chunks = chunker.chunk(md_file)
@@ -32,7 +32,7 @@ class TestMarkdownChunker:
         with tempfile.TemporaryDirectory() as tmpdir:
             md_file = os.path.join(tmpdir, "test.md")
             with open(md_file, 'w') as f:
-                f.write("## Section\nExplanation\n```nasm\nmov eax, 1\n```\nMore text")
+                f.write('## Section\nExplanation text that is long enough to pass the filter\n```nasm\nmov eax, 1\nmov ebx, 2\nmov ecx, 3\nmov edx, 4\n```\nMore explanation text after the code block that is also long enough')
             
             chunker = MarkdownChunker(overlap_lines=0)
             chunks = chunker.chunk(md_file)
