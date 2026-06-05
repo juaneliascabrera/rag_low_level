@@ -11,7 +11,7 @@ class OllamaClient:
     def generate(self, system_prompt: str, context: str, query: str) -> str:
         messages = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Contexto:\n{context}\n\nPregunta: {query}"}
+            {"role": "user", "content": query}
         ]
 
         print(f"[Generando con {self.model}...]", file=sys.stderr)
