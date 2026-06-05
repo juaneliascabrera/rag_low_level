@@ -59,19 +59,27 @@ class MarkdownChunker:
         lines = body.split('\n')
         sections = []
         current_section = {"heading": "Introducción", "level": 0, "content": []}
+        in_code_block = False
 
         for line in lines:
-            match = re.match(pattern, line)
-            if match:
-                if current_section["content"]:
-                    current_section["content"] = '\n'.join(current_section["content"])
-                    sections.append(current_section)
-
-                level = len(match.group(1))
-                heading = match.group(2).strip()
-                current_section = {"heading": heading, "level": level, "content": []}
-            else:
+            if line.strip().startswith('```'):
+                in_code_block = not in_code_block
                 current_section["content"].append(line)
+                continue
+
+            if not in_code_block:
+                match = re.match(pattern, line)
+                if match:
+                    if current_section["content"]:
+                        current_section["content"] = '\n'.join(current_section["content"])
+                        sections.append(current_section)
+
+                    level = len(match.group(1))
+                    heading = match.group(2).strip()
+                    current_section = {"heading": heading, "level": level, "content": []}
+                    continue
+
+            current_section["content"].append(line)
 
         if current_section["content"]:
             current_section["content"] = '\n'.join(current_section["content"])
@@ -125,7 +133,7 @@ class MarkdownChunker:
         return [(code.strip(), lang or "text") for lang, code in matches]
 
     def _remove_code_blocks(self, content: str) -> str:
-        return re.sub(r'```\w+?\n.*?```', '', content, flags=re.DOTALL).strip()
+        return re.sub(r'```(?:\w+)?\n.*?```', '', content, flags=re.DOTALL).strip()
 
     def _add_overlap(self, chunks: list[dict]) -> list[dict]:
         if len(chunks) <= 1 or self.overlap_lines == 0:
