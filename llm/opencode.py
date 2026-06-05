@@ -46,6 +46,9 @@ class OpenCodeClient:
         response.raise_for_status()
 
         full_response = ""
+        thinking_started = False
+        content_started = False
+
         for line in response.iter_lines():
             if line:
                 line_str = line.decode('utf-8')
@@ -54,10 +57,23 @@ class OpenCodeClient:
                     if data_str == '[DONE]':
                         break
                     data = json.loads(data_str)
-                    if data.get('choices') and data['choices'][0].get('delta', {}).get('content'):
-                        token = data['choices'][0]['delta']['content']
-                        print(token, end="", flush=True)
-                        full_response += token
+                    if data.get('choices'):
+                        delta = data['choices'][0].get('delta', {})
+
+                        thinking = delta.get('reasoning_content', '')
+                        if thinking:
+                            if not thinking_started:
+                                print("\n[Thinking]", file=sys.stderr)
+                                thinking_started = True
+                            print(thinking, end="", file=sys.stderr, flush=True)
+
+                        content = delta.get('content', '')
+                        if content:
+                            if thinking_started and not content_started:
+                                print("\n\n[Respuesta]", file=sys.stderr)
+                                content_started = True
+                            print(content, end="", flush=True)
+                            full_response += content
 
         print()
         return full_response
@@ -75,10 +91,14 @@ class OpenCodeClient:
             },
             json={
                 "model": self.model,
-                "max_tokens": 4096,
+                "max_tokens": 16384,
                 "system": system_message,
                 "messages": [{"role": "user", "content": user_message}],
-                "stream": True
+                "stream": True,
+                "thinking": {
+                    "type": "enabled",
+                    "budget_tokens": 10000
+                }
             },
             stream=True,
             timeout=300
@@ -86,6 +106,9 @@ class OpenCodeClient:
         response.raise_for_status()
 
         full_response = ""
+        thinking_started = False
+        content_started = False
+
         for line in response.iter_lines():
             if line:
                 line_str = line.decode('utf-8')
@@ -93,12 +116,28 @@ class OpenCodeClient:
                     data_str = line_str[6:]
                     data = json.loads(data_str)
 
-                    if data.get('type') == 'content_block_delta':
+                    if data.get('type') == 'content_block_start':
+                        block = data.get('content_block', {})
+                        if block.get('type') == 'thinking':
+                            print("\n[Thinking]", file=sys.stderr)
+                            thinking_started = True
+
+                    elif data.get('type') == 'content_block_delta':
                         delta = data.get('delta', {})
-                        if delta.get('type') == 'text_delta':
+
+                        if delta.get('type') == 'thinking_delta':
+                            thinking = delta.get('thinking', '')
+                            if thinking:
+                                print(thinking, end="", file=sys.stderr, flush=True)
+
+                        elif delta.get('type') == 'text_delta':
                             token = delta.get('text', '')
-                            print(token, end="", flush=True)
-                            full_response += token
+                            if token:
+                                if thinking_started and not content_started:
+                                    print("\n\n[Respuesta]", file=sys.stderr)
+                                    content_started = True
+                                print(token, end="", flush=True)
+                                full_response += token
 
         print()
         return full_response
