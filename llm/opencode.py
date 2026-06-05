@@ -1,9 +1,12 @@
 import requests
 import json
-import sys
+from logger import get_logger
+from .base import LLMClient
+
+logger = get_logger(__name__)
 
 
-class OpenCodeClient:
+class OpenCodeClient(LLMClient):
     def __init__(self, model: str, api_key: str):
         self.model = model
         self.api_key = api_key
@@ -21,7 +24,7 @@ class OpenCodeClient:
             {"role": "user", "content": query}
         ]
 
-        print(f"[Generando con OpenCode {self.model}...]", file=sys.stderr)
+        logger.info(f"Generando con OpenCode {self.model}...")
 
         if self.api_type == "openai":
             return self._generate_openai(messages)
@@ -29,21 +32,27 @@ class OpenCodeClient:
             return self._generate_anthropic(messages)
 
     def _generate_openai(self, messages: list) -> str:
-        response = requests.post(
-            f"{self.base_url}/chat/completions",
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": self.model,
-                "messages": messages,
-                "stream": True
-            },
-            stream=True,
-            timeout=300
-        )
-        response.raise_for_status()
+        try:
+            response = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": self.model,
+                    "messages": messages,
+                    "stream": True
+                },
+                stream=True,
+                timeout=300
+            )
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 401:
+                logger.error("API key inválida para OpenCode")
+                raise RuntimeError("API key inválida para OpenCode")
+            raise
 
         full_response = ""
         thinking_started = False
@@ -63,47 +72,53 @@ class OpenCodeClient:
                         thinking = delta.get('reasoning_content', '')
                         if thinking:
                             if not thinking_started:
-                                print("\n[Thinking]", file=sys.stderr)
+                                self._print_thinking_header()
                                 thinking_started = True
-                            print(thinking, end="", file=sys.stderr, flush=True)
+                            self._print_token(thinking, to_stderr=True)
 
                         content = delta.get('content', '')
                         if content:
                             if thinking_started and not content_started:
-                                print("\n\n[Respuesta]", file=sys.stderr)
+                                self._print_response_header()
                                 content_started = True
-                            print(content, end="", flush=True)
+                            self._print_token(content)
                             full_response += content
 
-        print()
+        self._print_newline()
         return full_response
 
     def _generate_anthropic(self, messages: list) -> str:
         system_message = messages[0]["content"]
         user_message = messages[1]["content"]
 
-        response = requests.post(
-            f"{self.base_url}/messages",
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-                "anthropic-version": "2023-06-01"
-            },
-            json={
-                "model": self.model,
-                "max_tokens": 16384,
-                "system": system_message,
-                "messages": [{"role": "user", "content": user_message}],
-                "stream": True,
-                "thinking": {
-                    "type": "enabled",
-                    "budget_tokens": 10000
-                }
-            },
-            stream=True,
-            timeout=300
-        )
-        response.raise_for_status()
+        try:
+            response = requests.post(
+                f"{self.base_url}/messages",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                    "anthropic-version": "2023-06-01"
+                },
+                json={
+                    "model": self.model,
+                    "max_tokens": 16384,
+                    "system": system_message,
+                    "messages": [{"role": "user", "content": user_message}],
+                    "stream": True,
+                    "thinking": {
+                        "type": "enabled",
+                        "budget_tokens": 10000
+                    }
+                },
+                stream=True,
+                timeout=300
+            )
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 401:
+                logger.error("API key inválida para OpenCode")
+                raise RuntimeError("API key inválida para OpenCode")
+            raise
 
         full_response = ""
         thinking_started = False
@@ -119,7 +134,7 @@ class OpenCodeClient:
                     if data.get('type') == 'content_block_start':
                         block = data.get('content_block', {})
                         if block.get('type') == 'thinking':
-                            print("\n[Thinking]", file=sys.stderr)
+                            self._print_thinking_header()
                             thinking_started = True
 
                     elif data.get('type') == 'content_block_delta':
@@ -128,16 +143,16 @@ class OpenCodeClient:
                         if delta.get('type') == 'thinking_delta':
                             thinking = delta.get('thinking', '')
                             if thinking:
-                                print(thinking, end="", file=sys.stderr, flush=True)
+                                self._print_token(thinking, to_stderr=True)
 
                         elif delta.get('type') == 'text_delta':
                             token = delta.get('text', '')
                             if token:
                                 if thinking_started and not content_started:
-                                    print("\n\n[Respuesta]", file=sys.stderr)
+                                    self._print_response_header()
                                     content_started = True
-                                print(token, end="", flush=True)
+                                self._print_token(token)
                                 full_response += token
 
-        print()
+        self._print_newline()
         return full_response

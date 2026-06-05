@@ -3,8 +3,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+LOG_LEVEL = "INFO"
+
 EMBEDDING_PROVIDER = "local"
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+EMBEDDING_MODEL = "BAAI/bge-large-es-v1.5"
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
@@ -21,11 +23,17 @@ STORAGE_DIR = "storage"
 TOP_K = 3
 SIMILARITY_THRESHOLD = 0.3
 
-DEBUG_SHOW_CONTEXT = True
+DEBUG_SHOW_CONTEXT = False
 
 SYSTEM_PROMPT = """Actuás como un ingeniero de firmware experto en Intel x86 de 32 bits en Modo Protegido.
 
 Contexto verificado del manual oficial:
 {context}
 
-Respondé usando únicamente la información del contexto. Si no es suficiente, decilo explícitamente. Está terminantemente prohibido alucinar o inventar registros de hardware."""
+Respondé usando únicamente la información del contexto. Si no es suficiente, decilo explícitamente. Está terminantemente prohibido alucinar o inventar registros de hardware.
+
+Formato de respuesta:
+- Si la pregunta es sobre código, proporcioná ejemplos en NASM
+- Si la pregunta es sobre estructuras de datos, usá diagramas o tablas
+- Citá el fragmento específico que usaste para cada afirmación principal usando [Fragmento N]
+"""

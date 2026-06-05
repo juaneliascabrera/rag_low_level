@@ -1,9 +1,12 @@
 import requests
 import json
-import sys
+from logger import get_logger
+from .base import LLMClient
+
+logger = get_logger(__name__)
 
 
-class OllamaClient:
+class OllamaClient(LLMClient):
     def __init__(self, base_url: str, model: str):
         self.base_url = base_url
         self.model = model
@@ -14,20 +17,27 @@ class OllamaClient:
             {"role": "user", "content": query}
         ]
 
-        print(f"[Generando con {self.model}...]", file=sys.stderr)
+        logger.info(f"Generando con {self.model}...")
 
-        response = requests.post(
-            f"{self.base_url}/api/chat",
-            json={
-                "model": self.model,
-                "messages": messages,
-                "stream": True,
-                "think": True
-            },
-            stream=True,
-            timeout=300
-        )
-        response.raise_for_status()
+        try:
+            response = requests.post(
+                f"{self.base_url}/api/chat",
+                json={
+                    "model": self.model,
+                    "messages": messages,
+                    "stream": True,
+                    "think": True
+                },
+                stream=True,
+                timeout=300
+            )
+            response.raise_for_status()
+        except requests.exceptions.ConnectionError:
+            logger.error(f"No se pudo conectar a Ollama en {self.base_url}")
+            raise RuntimeError(f"Ollama no está corriendo en {self.base_url}")
+        except requests.exceptions.Timeout:
+            logger.error("Timeout al conectar con Ollama")
+            raise RuntimeError("Timeout al conectar con Ollama (300s)")
 
         full_response = ""
         thinking_started = False
@@ -43,18 +53,18 @@ class OllamaClient:
                 content = data["message"].get("content", "")
 
                 if thinking and not thinking_started:
-                    print("\n[Thinking]", file=sys.stderr)
+                    self._print_thinking_header()
                     thinking_started = True
 
                 if thinking:
-                    print(thinking, end="", file=sys.stderr, flush=True)
+                    self._print_token(thinking, to_stderr=True)
 
                 if content:
                     if thinking_started and not content_started:
-                        print("\n\n[Respuesta]", file=sys.stderr)
+                        self._print_response_header()
                         content_started = True
-                    print(content, end="", flush=True)
+                    self._print_token(content)
                     full_response += content
 
-        print()
+        self._print_newline()
         return full_response

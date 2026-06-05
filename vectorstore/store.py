@@ -1,6 +1,9 @@
 import json
 import numpy as np
 from pathlib import Path
+from logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class VectorStore:
@@ -65,6 +68,8 @@ class VectorStore:
         with open(self.storage_dir / "config.json", 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2)
 
+        logger.info(f"VectorStore guardado: {len(self.texts)} vectores en {self.storage_dir}")
+
     def load(self):
         vectors_path = self.storage_dir / "vectors.npy"
         texts_path = self.storage_dir / "texts.json"
@@ -88,7 +93,10 @@ class VectorStore:
                 f"Ejecutá 'python rag.py index' para re-indexar."
             )
 
+        logger.info(f"VectorStore cargado: {len(self.texts)} vectores")
+
     def clear(self):
         self.vectors = np.array([])
         self.texts = []
         self.metadata = []
+        logger.info("VectorStore limpiado")

@@ -1,10 +1,14 @@
 import sys
 from pathlib import Path
 import config
+from logger import setup_logging, get_logger
 from embedder import LocalEmbedder, OllamaEmbedder, OpenAIEmbedder
 from vectorstore import VectorStore
 from chunker import MarkdownChunker
 from llm import OllamaClient, OpenCodeClient
+
+setup_logging(config.LOG_LEVEL)
+logger = get_logger(__name__)
 
 
 class RAGSystem:
@@ -35,28 +39,28 @@ class RAGSystem:
     def index(self):
         data_dir = Path(config.DATA_DIR)
         if not data_dir.exists():
-            print(f"Error: Directorio {config.DATA_DIR} no existe")
+            logger.error(f"Directorio {config.DATA_DIR} no existe")
             return
 
         md_files = list(data_dir.glob("*.md"))
         if not md_files:
-            print(f"No se encontraron archivos .md en {config.DATA_DIR}")
+            logger.warning(f"No se encontraron archivos .md en {config.DATA_DIR}")
             return
 
-        print(f"Indexando {len(md_files)} archivos...")
-        print(f"Modelo: {config.EMBEDDING_PROVIDER}/{config.EMBEDDING_MODEL}")
-        print(f"Dimensión: {self.embedder.dimension()}")
+        logger.info(f"Indexando {len(md_files)} archivos...")
+        logger.info(f"Modelo: {config.EMBEDDING_PROVIDER}/{config.EMBEDDING_MODEL}")
+        logger.info(f"Dimensión: {self.embedder.dimension()}")
 
         self.store.clear()
 
         all_chunks = []
         for filepath in md_files:
-            print(f"  Procesando: {filepath.name}")
+            logger.info(f"  Procesando: {filepath.name}")
             chunks = self.chunker.chunk(str(filepath))
             all_chunks.extend(chunks)
 
         if all_chunks:
-            print(f"  Generando embeddings para {len(all_chunks)} chunks...")
+            logger.info(f"  Generando embeddings para {len(all_chunks)} chunks...")
             texts = [chunk["text"] for chunk in all_chunks]
             vectors = self.embedder.embed_batch(texts)
 
@@ -64,18 +68,20 @@ class RAGSystem:
                 self.store.add(vector, chunk["text"], chunk["metadata"])
 
         self.store.save()
-        print(f"Indexación completa: {len(self.store.vectors)} chunks almacenados")
+        logger.info(f"Indexación completa: {len(self.store.texts)} chunks almacenados")
 
     def query(self, question: str) -> str:
         self.store.load()
 
         if self.store.vectors.size == 0:
+            logger.error("Base de datos vacía. Ejecutá 'python rag.py index' primero.")
             return "Error: Base de datos vacía. Ejecutá 'python rag.py index' primero."
 
         query_vector = self.embedder.embed(question)
         results = self.store.search(query_vector, config.TOP_K, config.SIMILARITY_THRESHOLD)
 
         if not results:
+            logger.warning("No se encontró contexto relevante para la consulta")
             return "No se encontró contexto relevante para tu consulta."
 
         context_parts = []
@@ -115,7 +121,7 @@ def main():
         rag.index()
     elif command == "query":
         if len(sys.argv) < 3:
-            print("Error: Especificá una pregunta")
+            logger.error("Especificá una pregunta")
             sys.exit(1)
         question = " ".join(sys.argv[2:])
         print("\n" + "="*80)
@@ -123,7 +129,7 @@ def main():
         print("="*80)
         rag.query(question)
     else:
-        print(f"Comando desconocido: {command}")
+        logger.error(f"Comando desconocido: {command}")
         sys.exit(1)
 
 
