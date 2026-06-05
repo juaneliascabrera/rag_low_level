@@ -15,7 +15,7 @@ class OpenCodeClient:
 
         self.api_type = "openai" if model in openai_models else "anthropic"
 
-    def generate(self, system_prompt: str, context: str, query: str) -> str:
+    def generate(self, system_prompt: str, query: str) -> str:
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": query}

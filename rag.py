@@ -85,7 +85,7 @@ class RAGSystem:
         context = "\n\n".join(context_parts)
         system_prompt = config.SYSTEM_PROMPT.format(context=context)
 
-        response = self.llm.generate(system_prompt, context, question)
+        response = self.llm.generate(system_prompt, question)
 
         if config.DEBUG_SHOW_CONTEXT:
             print("\n" + "="*80, file=sys.stderr)

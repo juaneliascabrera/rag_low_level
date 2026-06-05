@@ -8,7 +8,7 @@ class OllamaClient:
         self.base_url = base_url
         self.model = model
 
-    def generate(self, system_prompt: str, context: str, query: str) -> str:
+    def generate(self, system_prompt: str, query: str) -> str:
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": query}
