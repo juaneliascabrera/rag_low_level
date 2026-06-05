@@ -4,8 +4,9 @@ import sys
 
 
 class OpenCodeClient:
-    def __init__(self, model: str):
+    def __init__(self, model: str, api_key: str):
         self.model = model
+        self.api_key = api_key
         self.base_url = "https://opencode.ai/zen/go/v1"
 
         openai_models = ["glm-5.1", "glm-5", "kimi-k2.5", "kimi-k2.6",
@@ -30,6 +31,10 @@ class OpenCodeClient:
     def _generate_openai(self, messages: list) -> str:
         response = requests.post(
             f"{self.base_url}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            },
             json={
                 "model": self.model,
                 "messages": messages,
@@ -64,6 +69,7 @@ class OpenCodeClient:
         response = requests.post(
             f"{self.base_url}/messages",
             headers={
+                "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
                 "anthropic-version": "2023-06-01"
             },

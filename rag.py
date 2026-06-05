@@ -18,7 +18,7 @@ class RAGSystem:
         if config.LLM_PROVIDER == "ollama":
             return OllamaClient(config.OLLAMA_BASE_URL, config.LLM_MODEL)
         elif config.LLM_PROVIDER == "opencode":
-            return OpenCodeClient(config.OPENCODE_MODEL)
+            return OpenCodeClient(config.OPENCODE_MODEL, config.OPENCODE_API_KEY)
         else:
             raise ValueError(f"Proveedor de LLM no soportado: {config.LLM_PROVIDER}")
 
