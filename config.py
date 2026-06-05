@@ -4,7 +4,7 @@ EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 OPENAI_API_KEY = ""
 
 LLM_PROVIDER = "ollama"
-LLM_MODEL = "qwen2.5-coder:7b"
+LLM_MODEL = "gemma4:e4b-it-qat"
 OLLAMA_BASE_URL = "http://localhost:11434"
 
 DATA_DIR = "data/curated"
