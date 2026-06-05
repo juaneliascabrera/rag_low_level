@@ -3,11 +3,11 @@ EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
 OPENAI_API_KEY = ""
 
-LLM_PROVIDER = "ollama"
+LLM_PROVIDER = "opencode"
 LLM_MODEL = "gemma4:e4b-it-qat"
 OLLAMA_BASE_URL = "http://localhost:11434"
 
-OPENCODE_MODEL = "qwen3.7-max"
+OPENCODE_MODEL = "kimi-k2.6"
 
 DATA_DIR = "data/curated"
 STORAGE_DIR = "storage"
