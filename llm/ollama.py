@@ -1,5 +1,6 @@
 import requests
 import json
+import sys
 
 
 class OllamaClient:
@@ -13,6 +14,8 @@ class OllamaClient:
             {"role": "user", "content": f"Contexto:\n{context}\n\nPregunta: {query}"}
         ]
 
+        print(f"[Generando con {self.model}...]", file=sys.stderr)
+
         response = requests.post(
             f"{self.base_url}/api/chat",
             json={
@@ -20,7 +23,8 @@ class OllamaClient:
                 "messages": messages,
                 "stream": True
             },
-            stream=True
+            stream=True,
+            timeout=300
         )
         response.raise_for_status()
 
@@ -28,6 +32,8 @@ class OllamaClient:
         for line in response.iter_lines():
             if line:
                 data = json.loads(line)
+                if data.get("done", False):
+                    break
                 token = data["message"]["content"]
                 print(token, end="", flush=True)
                 full_response += token
