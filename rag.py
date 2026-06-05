@@ -115,6 +115,20 @@ class RAGSystem:
         self.store.save()
         logger.info(f"Indexing complete: {len(self.store.texts)} chunks stored")
 
+    def _deduplicate_fragments(self, results: list[dict]) -> list[dict]:
+        deduplicated = []
+        for result in results:
+            is_duplicate = False
+            for i, existing in enumerate(deduplicated):
+                if result["text"] in existing["text"] or existing["text"] in result["text"]:
+                    is_duplicate = True
+                    if len(result["text"]) > len(existing["text"]):
+                        deduplicated[i] = result
+                    break
+            if not is_duplicate:
+                deduplicated.append(result)
+        return deduplicated
+
     def query(self, question: str, metadata_filter: dict | None = None) -> str:
         self.store.load()
 
@@ -138,6 +152,8 @@ class RAGSystem:
         if reranker:
             logger.info(f"Re-ranking {len(results)} results...")
             results = reranker.rerank(question, results, config.RERANK_TOP_K)
+
+        results = self._deduplicate_fragments(results)
 
         context_parts = []
         total_tokens = 0
