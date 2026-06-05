@@ -16,6 +16,6 @@ Documento técnico:"""
 
         system_prompt = "Sos un experto en arquitectura x86 de 32 bits. Generá documentación técnica precisa y concisa."
 
-        hypothetical_doc = self.llm.generate(system_prompt, prompt.format(query=query))
+        hypothetical_doc = self.llm.generate(system_prompt, prompt.format(query=query), silent=True)
         logger.info(f"HyDE: Query transformada en documento hipotético ({len(hypothetical_doc)} chars)")
         return hypothetical_doc

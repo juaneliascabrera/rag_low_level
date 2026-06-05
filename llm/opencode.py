@@ -18,7 +18,7 @@ class OpenCodeClient(LLMClient):
 
         self.api_type = "openai" if model in openai_models else "anthropic"
 
-    def generate(self, system_prompt: str, query: str) -> str:
+    def generate(self, system_prompt: str, query: str, silent: bool = False) -> str:
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": query}
@@ -27,11 +27,11 @@ class OpenCodeClient(LLMClient):
         logger.info(f"Generando con OpenCode {self.model}...")
 
         if self.api_type == "openai":
-            return self._generate_openai(messages)
+            return self._generate_openai(messages, silent)
         else:
-            return self._generate_anthropic(messages)
+            return self._generate_anthropic(messages, silent)
 
-    def _generate_openai(self, messages: list) -> str:
+    def _generate_openai(self, messages: list, silent: bool = False) -> str:
         try:
             response = requests.post(
                 f"{self.base_url}/chat/completions",
@@ -72,22 +72,22 @@ class OpenCodeClient(LLMClient):
                         thinking = delta.get('reasoning_content', '')
                         if thinking:
                             if not thinking_started:
-                                self._print_thinking_header()
+                                self._print_thinking_header(silent)
                                 thinking_started = True
-                            self._print_token(thinking, to_stderr=True)
+                            self._print_token(thinking, to_stderr=True, silent=silent)
 
                         content = delta.get('content', '')
                         if content:
                             if thinking_started and not content_started:
-                                self._print_response_header()
+                                self._print_response_header(silent)
                                 content_started = True
-                            self._print_token(content)
+                            self._print_token(content, silent=silent)
                             full_response += content
 
-        self._print_newline()
+        self._print_newline(silent)
         return full_response
 
-    def _generate_anthropic(self, messages: list) -> str:
+    def _generate_anthropic(self, messages: list, silent: bool = False) -> str:
         system_message = messages[0]["content"]
         user_message = messages[1]["content"]
 
@@ -134,7 +134,7 @@ class OpenCodeClient(LLMClient):
                     if data.get('type') == 'content_block_start':
                         block = data.get('content_block', {})
                         if block.get('type') == 'thinking':
-                            self._print_thinking_header()
+                            self._print_thinking_header(silent)
                             thinking_started = True
 
                     elif data.get('type') == 'content_block_delta':
@@ -143,16 +143,16 @@ class OpenCodeClient(LLMClient):
                         if delta.get('type') == 'thinking_delta':
                             thinking = delta.get('thinking', '')
                             if thinking:
-                                self._print_token(thinking, to_stderr=True)
+                                self._print_token(thinking, to_stderr=True, silent=silent)
 
                         elif delta.get('type') == 'text_delta':
                             token = delta.get('text', '')
                             if token:
                                 if thinking_started and not content_started:
-                                    self._print_response_header()
+                                    self._print_response_header(silent)
                                     content_started = True
-                                self._print_token(token)
+                                self._print_token(token, silent=silent)
                                 full_response += token
 
-        self._print_newline()
+        self._print_newline(silent)
         return full_response

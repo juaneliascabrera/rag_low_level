@@ -20,8 +20,18 @@ class RAGSystem:
         self.chunker = MarkdownChunker()
         self.llm = self._create_llm()
         self.cache = EmbeddingCache(config.CACHE_DIR, config.EMBEDDING_MODEL)
-        self.reranker = Reranker(config.RERANK_MODEL) if config.RERANK_ENABLED else None
-        self.hyde = HyDETransformer(self.llm) if config.HYDE_ENABLED else None
+        self._reranker = None
+        self._hyde = None
+
+    def _get_reranker(self):
+        if self._reranker is None and config.RERANK_ENABLED:
+            self._reranker = Reranker(config.RERANK_MODEL)
+        return self._reranker
+
+    def _get_hyde(self):
+        if self._hyde is None and config.HYDE_ENABLED:
+            self._hyde = HyDETransformer(self.llm)
+        return self._hyde
 
     def _create_llm(self):
         if config.LLM_PROVIDER == "ollama":
@@ -109,8 +119,9 @@ class RAGSystem:
             return "Error: Base de datos vacía. Ejecutá 'python rag.py index' primero."
 
         search_query = question
-        if self.hyde:
-            search_query = self.hyde.transform(question)
+        hyde = self._get_hyde()
+        if hyde:
+            search_query = hyde.transform(question)
 
         query_vector = self.embedder.embed(search_query)
         results = self.store.search(query_vector, config.TOP_K, config.SIMILARITY_THRESHOLD, metadata_filter)
@@ -119,9 +130,10 @@ class RAGSystem:
             logger.warning("No se encontró contexto relevante para la consulta")
             return "No se encontró contexto relevante para tu consulta."
 
-        if self.reranker:
+        reranker = self._get_reranker()
+        if reranker:
             logger.info(f"Re-ranking {len(results)} resultados...")
-            results = self.reranker.rerank(question, results, config.RERANK_TOP_K)
+            results = reranker.rerank(question, results, config.RERANK_TOP_K)
 
         context_parts = []
         for i, result in enumerate(results, 1):

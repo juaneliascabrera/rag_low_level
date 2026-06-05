@@ -11,7 +11,7 @@ class OllamaClient(LLMClient):
         self.base_url = base_url
         self.model = model
 
-    def generate(self, system_prompt: str, query: str) -> str:
+    def generate(self, system_prompt: str, query: str, silent: bool = False) -> str:
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": query}
@@ -53,18 +53,18 @@ class OllamaClient(LLMClient):
                 content = data["message"].get("content", "")
 
                 if thinking and not thinking_started:
-                    self._print_thinking_header()
+                    self._print_thinking_header(silent)
                     thinking_started = True
 
                 if thinking:
-                    self._print_token(thinking, to_stderr=True)
+                    self._print_token(thinking, to_stderr=True, silent=silent)
 
                 if content:
                     if thinking_started and not content_started:
-                        self._print_response_header()
+                        self._print_response_header(silent)
                         content_started = True
-                    self._print_token(content)
+                    self._print_token(content, silent=silent)
                     full_response += content
 
-        self._print_newline()
+        self._print_newline(silent)
         return full_response
