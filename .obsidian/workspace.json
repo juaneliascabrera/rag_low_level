@@ -185,8 +185,17 @@
   },
   "active": "d4db8b0d3d80d878",
   "lastOpenFiles": [
-    "requirements.txt",
-    "data/curated",
-    "data"
+    "embedder/openai_client.py",
+    "embedder/ollama.py",
+    "embedder/local.py",
+    "embedder/base.py",
+    "config.py",
+    "llm/__init__.py",
+    "chunker/__init__.py",
+    "vectorstore/__init__.py",
+    "embedder/__init__.py",
+    "storage",
+    "llm",
+    "README.md"
   ]
 }
