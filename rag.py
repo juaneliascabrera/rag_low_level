@@ -49,11 +49,18 @@ class RAGSystem:
 
         self.store.clear()
 
+        all_chunks = []
         for filepath in md_files:
             print(f"  Procesando: {filepath.name}")
             chunks = self.chunker.chunk(str(filepath))
-            for chunk in chunks:
-                vector = self.embedder.embed(chunk["text"])
+            all_chunks.extend(chunks)
+
+        if all_chunks:
+            print(f"  Generando embeddings para {len(all_chunks)} chunks...")
+            texts = [chunk["text"] for chunk in all_chunks]
+            vectors = self.embedder.embed_batch(texts)
+
+            for chunk, vector in zip(all_chunks, vectors):
                 self.store.add(vector, chunk["text"], chunk["metadata"])
 
         self.store.save()

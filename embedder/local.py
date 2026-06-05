@@ -10,5 +10,9 @@ class LocalEmbedder(Embedder):
     def embed(self, text: str) -> list[float]:
         return self.model.encode(text).tolist()
 
+    def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        embeddings = self.model.encode(texts, batch_size=32)
+        return embeddings.tolist()
+
     def dimension(self) -> int:
         return self._dimension

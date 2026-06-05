@@ -185,6 +185,7 @@
   },
   "active": "d4db8b0d3d80d878",
   "lastOpenFiles": [
+    "analisis.md",
     "venv/lib/python3.14/site-packages/dotenv-0.9.9.dist-info/top_level.txt",
     "venv/lib/python3.14/site-packages/dotenv-0.9.9.dist-info/WHEEL",
     "venv/lib/python3.14/site-packages/dotenv-0.9.9.dist-info/REQUESTED",
@@ -195,7 +196,6 @@
     "venv/lib/python3.14/site-packages/dotenv-0.9.9.dist-info",
     "venv/bin/dotenv",
     "venv/lib/python3.14/site-packages/dotenv/__pycache__/version.cpython-314.pyc",
-    "venv/lib/python3.14/site-packages/dotenv/__pycache__/variables.cpython-314.pyc",
     "CONTEXT.md",
     "venv/lib/python3.14/site-packages/scipy/ndimage/tests/dots.png",
     "venv/lib/python3.14/site-packages/scipy/fft/_pocketfft/LICENSE.md",
