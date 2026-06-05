@@ -21,19 +21,30 @@ pip install -r requirements.txt
 ## Uso
 
 ```bash
-# Próximamente
-python rag.py "¿Cómo configuro un descriptor de segmento en la GDT?"
+# 1. Configurar proveedor de embeddings en config.py
+# EMBEDDING_PROVIDER = "local"  # o "ollama", "openai"
+
+# 2. Indexar documentos (primera vez o cambio de modelo)
+python rag.py index
+
+# 3. Hacer consultas
+python rag.py query "¿Cómo configuro un descriptor de segmento en la GDT?"
 ```
 
 ## Estructura
 
 ```
 .
-├── data/
-│   └── curated/       # Documentos Markdown curados manualmente
-├── rag.py             # Script principal (próximamente)
-├── requirements.txt   # Dependencias
-└── CONTEXT.md         # Contexto detallado del proyecto
+├── rag.py              # CLI principal y orquestador
+├── config.py           # Configuración central
+├── embedder/           # Proveedores de embeddings (local, ollama, openai)
+├── vectorstore/        # Almacenamiento vectorial (NumPy + JSON)
+├── chunker/            # Parser de Markdown por headings
+├── llm/                # Clientes LLM (Ollama)
+├── data/curated/       # Documentos Markdown curados manualmente
+├── storage/            # Vectores persistidos (auto-generado)
+├── requirements.txt    # Dependencias
+└── CONTEXT.md          # Contexto detallado del proyecto
 ```
 
 ## Licencia
