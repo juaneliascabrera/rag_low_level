@@ -185,6 +185,8 @@
   },
   "active": "d4db8b0d3d80d878",
   "lastOpenFiles": [
+    "vectorstore/store.py",
+    "chunker/markdown.py",
     "embedder/openai_client.py",
     "embedder/ollama.py",
     "embedder/local.py",
@@ -194,8 +196,6 @@
     "chunker/__init__.py",
     "vectorstore/__init__.py",
     "embedder/__init__.py",
-    "storage",
-    "llm",
     "README.md"
   ]
 }
