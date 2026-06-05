@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "CONTEXT.md",
+                "file": "data/curated/GDT.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "CONTEXT"
+              "title": "GDT"
             }
           }
         ]
@@ -185,17 +185,43 @@
   },
   "active": "d4db8b0d3d80d878",
   "lastOpenFiles": [
+    "debug_search.py",
+    "CONTEXT.md",
+    "venv/lib/python3.14/site-packages/scipy/stats/tests/data/nist_anova/SmLs09.dat",
+    "venv/lib/python3.14/site-packages/scipy/stats/tests/data/nist_anova/SmLs08.dat",
+    "venv/lib/python3.14/site-packages/scipy/stats/tests/data/nist_anova/SmLs07.dat",
+    "venv/lib/python3.14/site-packages/scipy/stats/tests/data/nist_anova/SmLs06.dat",
+    "venv/lib/python3.14/site-packages/scipy/stats/tests/data/nist_anova/SmLs05.dat",
+    "venv/lib/python3.14/site-packages/scipy/stats/tests/data/nist_anova/SmLs04.dat",
+    "venv/lib/python3.14/site-packages/scipy/stats/tests/data/nist_anova/SmLs03.dat",
+    "venv/lib/python3.14/site-packages/scipy/stats/tests/data/nist_anova/SmLs02.dat",
+    "venv/lib/python3.14/site-packages/scipy/stats/tests/data/nist_anova/SmLs01.dat",
+    "venv/lib/python3.14/site-packages/scipy/stats/tests/data/nist_anova/SiRstv.dat",
+    "venv/lib/python3.14/site-packages/scipy/ndimage/tests/dots.png",
+    "venv/lib/python3.14/site-packages/scipy/fft/_pocketfft/LICENSE.md",
+    "venv/lib/python3.14/site-packages/cuda/pathfinder/README.md",
+    "venv/lib/python3.14/site-packages/idna-3.18.dist-info/licenses/LICENSE.md",
+    "venv/lib/python3.14/site-packages/narwhals-2.22.1.dist-info/licenses/LICENSE.md",
+    "venv/lib/python3.14/site-packages/networkx/drawing/tests/baseline/test_house_with_colors.png",
+    "venv/lib/python3.14/site-packages/networkx/drawing/tests/baseline/test_display_shortest_path.png",
+    "venv/lib/python3.14/site-packages/networkx/drawing/tests/baseline/test_display_labels_and_colors.png",
+    "venv/lib/python3.14/site-packages/networkx/drawing/tests/baseline/test_display_house_with_colors.png",
+    "venv/lib/python3.14/site-packages/networkx/drawing/tests/baseline/test_display_empty_graph.png",
+    "venv/lib/python3.14/site-packages/networkx/drawing/tests/baseline/test_display_complex.png",
+    "venv/lib/python3.14/site-packages/numpy-2.4.6.dist-info/licenses/numpy/_core/src/npysort/x86-simd-sort/LICENSE.md",
+    "venv/lib/python3.14/site-packages/numpy-2.4.6.dist-info/licenses/numpy/random/src/splitmix64/LICENSE.md",
+    "venv/lib/python3.14/site-packages/numpy-2.4.6.dist-info/licenses/numpy/random/src/sfc64/LICENSE.md",
+    "venv/lib/python3.14/site-packages/numpy-2.4.6.dist-info/licenses/numpy/random/src/philox/LICENSE.md",
+    "venv/lib/python3.14/site-packages/numpy-2.4.6.dist-info/licenses/numpy/random/src/pcg64/LICENSE.md",
+    "venv/lib/python3.14/site-packages/numpy-2.4.6.dist-info/licenses/numpy/random/src/mt19937/LICENSE.md",
+    "venv/lib/python3.14/site-packages/numpy-2.4.6.dist-info/licenses/numpy/random/src/distributions/LICENSE.md",
+    "venv/lib/python3.14/site-packages/numpy-2.4.6.dist-info/licenses/numpy/fft/pocketfft/LICENSE.md",
+    "venv/lib/python3.14/site-packages/numpy-2.4.6.dist-info/licenses/numpy/random/LICENSE.md",
+    "venv/lib/python3.14/site-packages/numpy/random/LICENSE.md",
+    "venv/lib/python3.14/site-packages/sympy/plotting/tests/test_region_xor.png",
+    "venv/lib/python3.14/site-packages/sympy/plotting/tests/test_region_or.png",
+    "venv/lib/python3.14/site-packages/sympy/plotting/tests/test_region_not.png",
     "data/curated/GDT.md",
-    "rag.py",
-    "llm/ollama.py",
-    "vectorstore/store.py",
-    "chunker/markdown.py",
-    "embedder/openai_client.py",
-    "embedder/ollama.py",
-    "embedder/local.py",
-    "embedder/base.py",
-    "config.py",
-    "llm/__init__.py",
     "README.md"
   ]
 }

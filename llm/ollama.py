@@ -1,4 +1,5 @@
 import requests
+import json
 
 
 class OllamaClient:
@@ -17,8 +18,18 @@ class OllamaClient:
             json={
                 "model": self.model,
                 "messages": messages,
-                "stream": False
-            }
+                "stream": True
+            },
+            stream=True
         )
         response.raise_for_status()
-        return response.json()["message"]["content"]
+
+        full_response = ""
+        for line in response.iter_lines():
+            if line:
+                data = json.loads(line)
+                token = data["message"]["content"]
+                print(token, end="", flush=True)
+                full_response += token
+        print()
+        return full_response

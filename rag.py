@@ -91,11 +91,10 @@ def main():
             print("Error: Especificá una pregunta")
             sys.exit(1)
         question = " ".join(sys.argv[2:])
-        response = rag.query(question)
         print("\n" + "="*80)
         print("RESPUESTA:")
         print("="*80)
-        print(response)
+        rag.query(question)
     else:
         print(f"Comando desconocido: {command}")
         sys.exit(1)
