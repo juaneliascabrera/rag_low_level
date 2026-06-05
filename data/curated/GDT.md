@@ -1,3 +1,10 @@
+---
+architecture: x86_32
+component: GDT
+mode: protected
+tags: [segmentation, memory, descriptors]
+---
+
 # GDT - Global Descriptor Table
 
 La Global Descriptor Table (GDT) es una estructura de datos utilizada por la arquitectura x86 en Modo Protegido para definir las características de los segmentos de memoria.

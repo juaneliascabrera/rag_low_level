@@ -2,10 +2,12 @@ import sys
 from pathlib import Path
 import config
 from logger import setup_logging, get_logger
-from embedder import LocalEmbedder, OllamaEmbedder, OpenAIEmbedder
+from embedder import LocalEmbedder, OllamaEmbedder, OpenAIEmbedder, EmbeddingCache
 from vectorstore import VectorStore
 from chunker import MarkdownChunker
 from llm import OllamaClient, OpenCodeClient
+from reranker import Reranker
+from retrieval import HyDETransformer
 
 setup_logging(config.LOG_LEVEL)
 logger = get_logger(__name__)
@@ -17,6 +19,9 @@ class RAGSystem:
         self.store = VectorStore(self.embedder.dimension(), config.STORAGE_DIR)
         self.chunker = MarkdownChunker()
         self.llm = self._create_llm()
+        self.cache = EmbeddingCache(config.CACHE_DIR)
+        self.reranker = Reranker(config.RERANK_MODEL) if config.RERANK_ENABLED else None
+        self.hyde = HyDETransformer(self.llm) if config.HYDE_ENABLED else None
 
     def _create_llm(self):
         if config.LLM_PROVIDER == "ollama":
@@ -61,28 +66,62 @@ class RAGSystem:
 
         if all_chunks:
             logger.info(f"  Generando embeddings para {len(all_chunks)} chunks...")
+
             texts = [chunk["text"] for chunk in all_chunks]
-            vectors = self.embedder.embed_batch(texts)
+            vectors = []
+
+            texts_to_embed = []
+            cache_hits = []
+
+            for i, text in enumerate(texts):
+                cached = self.cache.get(text)
+                if cached:
+                    vectors.append(cached)
+                    cache_hits.append(i)
+                else:
+                    texts_to_embed.append((i, text))
+
+            if cache_hits:
+                logger.info(f"  Caché: {len(cache_hits)} chunks recuperados del caché")
+
+            if texts_to_embed:
+                logger.info(f"  Generando {len(texts_to_embed)} embeddings nuevos...")
+                texts_only = [t[1] for t in texts_to_embed]
+                new_vectors = self.embedder.embed_batch(texts_only)
+
+                for (i, text), vector in zip(texts_to_embed, new_vectors):
+                    self.cache.set(text, vector)
+                    vectors.append(vector)
 
             for chunk, vector in zip(all_chunks, vectors):
                 self.store.add(vector, chunk["text"], chunk["metadata"])
 
+            self.cache.save()
+
         self.store.save()
         logger.info(f"Indexación completa: {len(self.store.texts)} chunks almacenados")
 
-    def query(self, question: str) -> str:
+    def query(self, question: str, metadata_filter: dict | None = None) -> str:
         self.store.load()
 
         if self.store.vectors.size == 0:
             logger.error("Base de datos vacía. Ejecutá 'python rag.py index' primero.")
             return "Error: Base de datos vacía. Ejecutá 'python rag.py index' primero."
 
-        query_vector = self.embedder.embed(question)
-        results = self.store.search(query_vector, config.TOP_K, config.SIMILARITY_THRESHOLD)
+        search_query = question
+        if self.hyde:
+            search_query = self.hyde.transform(question)
+
+        query_vector = self.embedder.embed(search_query)
+        results = self.store.search(query_vector, config.TOP_K, config.SIMILARITY_THRESHOLD, metadata_filter)
 
         if not results:
             logger.warning("No se encontró contexto relevante para la consulta")
             return "No se encontró contexto relevante para tu consulta."
+
+        if self.reranker:
+            logger.info(f"Re-ranking {len(results)} resultados...")
+            results = self.reranker.rerank(question, results, config.RERANK_TOP_K)
 
         context_parts = []
         for i, result in enumerate(results, 1):
@@ -99,6 +138,8 @@ class RAGSystem:
             print("="*80, file=sys.stderr)
             for i, result in enumerate(results, 1):
                 print(f"\n[Fragmento {i}] (similitud: {result['similarity']:.2f})", file=sys.stderr)
+                if "rerank_score" in result:
+                    print(f"Re-rank score: {result['rerank_score']:.2f}", file=sys.stderr)
                 print(f"Source: {result['metadata'].get('source', 'N/A')}", file=sys.stderr)
                 print(f"Section: {result['metadata'].get('section', 'N/A')}", file=sys.stderr)
                 print("-"*80, file=sys.stderr)

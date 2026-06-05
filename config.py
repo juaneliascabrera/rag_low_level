@@ -6,7 +6,7 @@ load_dotenv()
 LOG_LEVEL = "INFO"
 
 EMBEDDING_PROVIDER = "local"
-EMBEDDING_MODEL = "BAAI/bge-large-es-v1.5"
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
@@ -19,9 +19,16 @@ OPENCODE_MODEL = "kimi-k2.6"
 
 DATA_DIR = "data/curated"
 STORAGE_DIR = "storage"
+CACHE_DIR = "storage/cache"
 
 TOP_K = 3
 SIMILARITY_THRESHOLD = 0.3
+
+RERANK_ENABLED = True
+RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+RERANK_TOP_K = 3
+
+HYDE_ENABLED = False
 
 DEBUG_SHOW_CONTEXT = False
 

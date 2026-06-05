@@ -29,7 +29,8 @@ class VectorStore:
         self.texts.append(text)
         self.metadata.append(metadata)
 
-    def search(self, query_vector: list[float], top_k: int = 3, threshold: float = 0.7) -> list[dict]:
+    def search(self, query_vector: list[float], top_k: int = 3, threshold: float = 0.7, 
+               metadata_filter: dict | None = None) -> list[dict]:
         if self.vectors.size == 0:
             return []
 
@@ -40,6 +41,8 @@ class VectorStore:
         results = []
         for i, similarity in enumerate(similarities):
             if similarity >= threshold:
+                if metadata_filter and not self._matches_filter(self.metadata[i], metadata_filter):
+                    continue
                 results.append({
                     "text": self.texts[i],
                     "metadata": self.metadata[i],
@@ -48,6 +51,18 @@ class VectorStore:
 
         results.sort(key=lambda x: x["similarity"], reverse=True)
         return results[:top_k]
+
+    def _matches_filter(self, metadata: dict, filter_dict: dict) -> bool:
+        for key, value in filter_dict.items():
+            if key not in metadata:
+                return False
+            if isinstance(value, list):
+                if metadata[key] not in value:
+                    return False
+            else:
+                if metadata[key] != value:
+                    return False
+        return True
 
     def save(self):
         self.storage_dir.mkdir(parents=True, exist_ok=True)
