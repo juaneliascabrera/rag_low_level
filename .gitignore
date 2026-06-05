@@ -33,6 +33,9 @@ storage/
 # Environment variables
 .env
 
+# Obsidian
+.obsidian/
+
 # IDE
 .vscode/
 .idea/
