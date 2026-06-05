@@ -7,6 +7,8 @@ LLM_PROVIDER = "ollama"
 LLM_MODEL = "gemma4:e4b-it-qat"
 OLLAMA_BASE_URL = "http://localhost:11434"
 
+OPENCODE_MODEL = "qwen3.7-max"
+
 DATA_DIR = "data/curated"
 STORAGE_DIR = "storage"
 

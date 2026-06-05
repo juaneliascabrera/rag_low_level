@@ -185,6 +185,7 @@
   },
   "active": "d4db8b0d3d80d878",
   "lastOpenFiles": [
+    "llm/opencode.py",
     "debug_search.py",
     "CONTEXT.md",
     "venv/lib/python3.14/site-packages/scipy/stats/tests/data/nist_anova/SmLs09.dat",
@@ -196,7 +197,6 @@
     "venv/lib/python3.14/site-packages/scipy/stats/tests/data/nist_anova/SmLs03.dat",
     "venv/lib/python3.14/site-packages/scipy/stats/tests/data/nist_anova/SmLs02.dat",
     "venv/lib/python3.14/site-packages/scipy/stats/tests/data/nist_anova/SmLs01.dat",
-    "venv/lib/python3.14/site-packages/scipy/stats/tests/data/nist_anova/SiRstv.dat",
     "venv/lib/python3.14/site-packages/scipy/ndimage/tests/dots.png",
     "venv/lib/python3.14/site-packages/scipy/fft/_pocketfft/LICENSE.md",
     "venv/lib/python3.14/site-packages/cuda/pathfinder/README.md",

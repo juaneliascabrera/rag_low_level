@@ -4,7 +4,7 @@ import config
 from embedder import LocalEmbedder, OllamaEmbedder, OpenAIEmbedder
 from vectorstore import VectorStore
 from chunker import MarkdownChunker
-from llm import OllamaClient
+from llm import OllamaClient, OpenCodeClient
 
 
 class RAGSystem:
@@ -12,7 +12,15 @@ class RAGSystem:
         self.embedder = self._create_embedder()
         self.store = VectorStore(self.embedder.dimension(), config.STORAGE_DIR)
         self.chunker = MarkdownChunker()
-        self.llm = OllamaClient(config.OLLAMA_BASE_URL, config.LLM_MODEL)
+        self.llm = self._create_llm()
+
+    def _create_llm(self):
+        if config.LLM_PROVIDER == "ollama":
+            return OllamaClient(config.OLLAMA_BASE_URL, config.LLM_MODEL)
+        elif config.LLM_PROVIDER == "opencode":
+            return OpenCodeClient(config.OPENCODE_MODEL)
+        else:
+            raise ValueError(f"Proveedor de LLM no soportado: {config.LLM_PROVIDER}")
 
     def _create_embedder(self):
         if config.EMBEDDING_PROVIDER == "local":
