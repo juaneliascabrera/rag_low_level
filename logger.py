@@ -5,6 +5,12 @@ import sys
 def setup_logging(level: str = "INFO") -> None:
     numeric_level = getattr(logging, level.upper(), logging.INFO)
 
+    root_logger = logging.getLogger()
+
+    if root_logger.handlers:
+        root_logger.setLevel(numeric_level)
+        return
+
     formatter = logging.Formatter(
         fmt="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         datefmt="%H:%M:%S"
@@ -13,7 +19,6 @@ def setup_logging(level: str = "INFO") -> None:
     handler = logging.StreamHandler(sys.stderr)
     handler.setFormatter(formatter)
 
-    root_logger = logging.getLogger()
     root_logger.setLevel(numeric_level)
     root_logger.addHandler(handler)
 

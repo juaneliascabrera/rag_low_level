@@ -1,10 +1,15 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from logger import get_logger
+
+if TYPE_CHECKING:
+    from llm.base import LLMClient
 
 logger = get_logger(__name__)
 
 
 class HyDETransformer:
-    def __init__(self, llm_client):
+    def __init__(self, llm_client: LLMClient):
         self.llm = llm_client
 
     def transform(self, query: str) -> str:

@@ -7,16 +7,27 @@ logger = get_logger(__name__)
 
 
 class OpenCodeClient(LLMClient):
-    def __init__(self, model: str, api_key: str):
+    # Models that use the OpenAI-compatible API format
+    OPENAI_MODELS = {
+        "glm-5.1", "glm-5", "kimi-k2.5", "kimi-k2.6",
+        "deepseek-v4-pro", "deepseek-v4-flash",
+        "mimo-v2.5", "mimo-v2.5-pro",
+    }
+
+    def __init__(self, model: str, api_key: str, api_type: str | None = None):
         self.model = model
         self.api_key = api_key
         self.base_url = "https://opencode.ai/zen/go/v1"
 
-        openai_models = ["glm-5.1", "glm-5", "kimi-k2.5", "kimi-k2.6",
-                        "deepseek-v4-pro", "deepseek-v4-flash",
-                        "mimo-v2.5", "mimo-v2.5-pro"]
-
-        self.api_type = "openai" if model in openai_models else "anthropic"
+        if api_type:
+            self.api_type = api_type
+        else:
+            # Auto-detect based on known model list
+            from config import OPENCODE_API_TYPE
+            if OPENCODE_API_TYPE:
+                self.api_type = OPENCODE_API_TYPE
+            else:
+                self.api_type = "openai" if model in self.OPENAI_MODELS else "anthropic"
 
     def generate(self, system_prompt: str, query: str, silent: bool = False) -> str:
         messages = [

@@ -12,16 +12,18 @@ MODEL_DIMENSIONS = {
 
 
 class OpenAIEmbedder(Embedder):
-    def __init__(self, api_key: str, model_name: str = "text-embedding-3-small"):
+    def __init__(self, api_key: str, model_name: str = "text-embedding-3-small",
+                 base_url: str = "https://api.openai.com/v1"):
         self.api_key = api_key
         self.model_name = model_name
+        self.base_url = base_url
         self._dimension = MODEL_DIMENSIONS.get(model_name, 1536)
         logger.info(f"Initializing OpenAIEmbedder: {model_name} (dimension: {self._dimension})")
 
     def embed(self, text: str) -> list[float]:
         try:
             response = requests.post(
-                "https://api.openai.com/v1/embeddings",
+                f"{self.base_url}/embeddings",
                 headers={
                     "Authorization": f"Bearer {self.api_key}",
                     "Content-Type": "application/json"

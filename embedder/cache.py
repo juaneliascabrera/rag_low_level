@@ -7,7 +7,7 @@ logger = get_logger(__name__)
 
 
 class EmbeddingCache:
-    def __init__(self, cache_dir: str, model_name: str = ""):
+    def __init__(self, cache_dir: str, model_name: str):
         self.cache_dir = Path(cache_dir)
         self.cache_file = self.cache_dir / "embedding_cache.pkl"
         self.model_name = model_name

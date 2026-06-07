@@ -22,17 +22,23 @@ class VectorStore:
         return vector / norm
 
     def add(self, vector: list[float], text: str, metadata: dict):
-        normalized = self._normalize(np.array(vector))
+        vec_array = np.array(vector)
+        if vec_array.shape[0] != self.dimension:
+            raise ValueError(
+                f"Vector dimension mismatch: expected {self.dimension}, got {vec_array.shape[0]}"
+            )
+        normalized = self._normalize(vec_array)
         self._pending_vectors.append(normalized)
         self.texts.append(text)
         self.metadata.append(metadata)
 
     def _flush_pending(self):
         if self._pending_vectors:
+            pending = np.array(self._pending_vectors)
             if self.vectors.size == 0:
-                self.vectors = np.array(self._pending_vectors)
+                self.vectors = pending
             else:
-                self.vectors = np.vstack([self.vectors] + self._pending_vectors)
+                self.vectors = np.vstack([self.vectors, pending])
             self._pending_vectors = []
 
     def search(self, query_vector: list[float], top_k: int = 3, threshold: float = 0.7, 

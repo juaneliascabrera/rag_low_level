@@ -21,6 +21,7 @@ class RAGSystem:
             )
         self.embedder = self._create_embedder()
         self.store = VectorStore(self.embedder.dimension(), config.STORAGE_DIR)
+        self.store.load()
         self.chunker = MarkdownChunker()
         self.llm = self._create_llm()
         self.cache = EmbeddingCache(config.CACHE_DIR, config.EMBEDDING_MODEL)
@@ -82,7 +83,7 @@ class RAGSystem:
             logger.info(f"  Generating embeddings for {len(all_chunks)} chunks...")
 
             texts = [chunk["text"] for chunk in all_chunks]
-            vectors = []
+            vectors = [None] * len(texts)
 
             texts_to_embed = []
             cache_hits = []
@@ -90,7 +91,7 @@ class RAGSystem:
             for i, text in enumerate(texts):
                 cached = self.cache.get(text)
                 if cached:
-                    vectors.append(cached)
+                    vectors[i] = cached
                     cache_hits.append(i)
                 else:
                     texts_to_embed.append((i, text))
@@ -105,7 +106,7 @@ class RAGSystem:
 
                 for (i, text), vector in zip(texts_to_embed, new_vectors):
                     self.cache.set(text, vector)
-                    vectors.append(vector)
+                    vectors[i] = vector
 
             for chunk, vector in zip(all_chunks, vectors):
                 self.store.add(vector, chunk["text"], chunk["metadata"])
@@ -117,21 +118,17 @@ class RAGSystem:
 
     def _deduplicate_fragments(self, results: list[dict]) -> list[dict]:
         deduplicated = []
+        seen_texts = set()
         for result in results:
-            is_duplicate = False
-            for i, existing in enumerate(deduplicated):
-                if result["text"] in existing["text"] or existing["text"] in result["text"]:
-                    is_duplicate = True
-                    if len(result["text"]) > len(existing["text"]):
-                        deduplicated[i] = result
-                    break
-            if not is_duplicate:
-                deduplicated.append(result)
+            text = result["text"]
+            # Skip exact duplicates
+            if text in seen_texts:
+                continue
+            seen_texts.add(text)
+            deduplicated.append(result)
         return deduplicated
 
     def query(self, question: str, metadata_filter: dict | None = None) -> str:
-        self.store.load()
-
         if self.store.vectors.size == 0:
             logger.error("Empty database. Run 'python rag.py index' first.")
             return "Error: Empty database. Run 'python rag.py index' first."
@@ -196,7 +193,12 @@ def main():
         sys.exit(1)
 
     command = sys.argv[1]
-    rag = RAGSystem()
+
+    try:
+        rag = RAGSystem()
+    except (RuntimeError, ValueError) as e:
+        logger.error(f"Failed to initialize: {e}")
+        sys.exit(1)
 
     if command == "index":
         rag.index()
@@ -208,7 +210,11 @@ def main():
         print("\n" + "="*80)
         print("ANSWER:")
         print("="*80)
-        rag.query(question)
+        try:
+            rag.query(question)
+        except KeyboardInterrupt:
+            print("\n\nInterrupted.")
+            sys.exit(130)
     else:
         logger.error(f"Unknown command: {command}")
         sys.exit(1)

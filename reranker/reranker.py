@@ -11,13 +11,15 @@ class Reranker:
 
     def rerank(self, query: str, results: list[dict], top_k: int = 3) -> list[dict]:
         if not results:
-            return results
+            return []
 
         pairs = [(query, result["text"]) for result in results]
         scores = self.model.predict(pairs)
 
+        scored_results = []
         for result, score in zip(results, scores):
-            result["rerank_score"] = float(score)
+            scored_copy = {**result, "rerank_score": float(score)}
+            scored_results.append(scored_copy)
 
-        results.sort(key=lambda x: x["rerank_score"], reverse=True)
-        return results[:top_k]
+        scored_results.sort(key=lambda x: x["rerank_score"], reverse=True)
+        return scored_results[:top_k]

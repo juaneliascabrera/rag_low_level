@@ -1,6 +1,6 @@
 # Project Context: RAG Specialized in Low-Level (Intel x86 32-bit)
 
-> **Date:** 2026-06-05  
+> **Date:** 2026-06-07  
 > **Goal:** Centralize the context, technical challenges, suggested architecture, and roadmap for developing an open-source RAG system focused on optimizing LLM performance in low-level programming tasks, monolithic kernel development, and embedded systems.
 
 ---
@@ -31,82 +31,168 @@ To guarantee the system's viability and accuracy, the initial scope is strictly 
 
 ## 3. RAG System Architecture
 
-The system is composed of three core modules distributed locally to guarantee the developer's privacy and offline operation:
+The system is composed of modular components distributed locally to guarantee the developer's privacy and offline operation:
 
 ```
-[ Technical Manuals / PDFs ] --> [ Ingestion Parser ] --> [ Semantic Fragmentation ]
-                                                            │
-                                                            ▼
-[ Local LLM via Ollama ] <-- [ Prompt Orchestrator ] <-- [ Vector Database (ChromaDB) ]
+[ Curated Markdown Docs ] --> [ MarkdownChunker ] --> [ Semantic Chunks ]
+                                                          |
+                                                          v
+[ LLM (Ollama/OpenCode) ] <-- [ RAGSystem ] <-- [ VectorStore (numpy) ]
+                                   |                      ^
+                                   |                      |
+                              [ Reranker ]          [ EmbeddingCache ]
+                              [ HyDE (optional) ]   [ Embedder (Ollama/Local/OpenAI) ]
 ```
 
-### 3.A. Specialized Ingestion and Parser Module (`src/parser/`)
+### 3.A. Chunker Module (`chunker/`)
 
-Official technical manuals (such as the *Intel Architecture Software Developer's Manual, Volume 3*) present complex tabular structures that plain text extractors break easily.
+- **`MarkdownChunker`**: Splits curated Markdown documents into semantic chunks based on headings.
+- Separates code blocks from explanatory text into distinct chunks.
+- Adds overlap between consecutive chunks of the same type.
+- Filters out irrelevant/too-short chunks.
+- Supports YAML frontmatter for metadata (architecture, component, mode, tags).
 
-- **Function:** Parse selected pages of the official documentation, converting bit diagrams and register tables into clean structured formats (Markdown or JSON).
-- **Suggested tools:** PyMuPDF, Marker, or local layout-vision models.
+### 3.B. Embedder Module (`embedder/`)
 
-### 3.B. Vector Knowledge Base and Chunking (`src/embedder/`)
+- **Interface**: `Embedder` (abstract base class) with `embed()`, `embed_batch()`, and `dimension()` methods.
+- **Implementations**:
+  - `LocalEmbedder`: Uses `sentence-transformers` for local embedding.
+  - `OllamaEmbedder`: Uses Ollama API (`/api/embeddings` and `/api/embed` batch).
+  - `OpenAIEmbedder`: Uses OpenAI-compatible API.
+- **`EmbeddingCache`**: Pickle-based disk cache keyed by `model_name:text` SHA-256 hash.
 
-Traditional character-count-based fragmentation destroys low-level semantics.
+### 3.C. VectorStore (`vectorstore/`)
 
-- **Chunking Strategy:** Indivisible semantic fragmentation by hardware structures. For example, the complete description of a GDT segment descriptor (Base, Limit, Access, DPL) must remain in a single chunk with its associated metadata.
-- **Metadata Structure:** Each vector is stored with explicit labels:
+- **`VectorStore`**: Custom numpy-based vector store with cosine similarity search.
+- Pre-normalizes vectors on insertion for efficient dot-product search.
+- Supports metadata filtering and similarity threshold.
+- Persistence via `vectors.npy`, `texts.json`, `metadata.json`, `config.json`.
 
-```json
-{
-  "architecture": "x86_32",
-  "component": "IDT",
-  "information_type": "byte_structure",
-  "mode": "protected"
-}
-```
+### 3.D. LLM Module (`llm/`)
 
-- **Storage:** Lightweight local vector database such as ChromaDB, FAISS, or LanceDB.
+- **Interface**: `LLMClient` (abstract base class) with `generate()` method supporting streaming output.
+- **Implementations**:
+  - `OllamaClient`: Ollama chat API with streaming and thinking/reasoning support.
+  - `OpenCodeClient`: OpenCode API with auto-detection of OpenAI vs Anthropic format.
+- Both support `silent` mode for internal use (e.g., HyDE).
 
-### 3.C. Orchestration Client and Prompt Injection (`src/llm_client/`)
+### 3.E. Reranker (`reranker/`)
 
-Responsible for intercepting the developer's query, performing semantic search, and injecting context under strict control rules.
+- **`Reranker`**: Cross-encoder based re-ranking using `sentence-transformers`.
+- Re-scores retrieval results for improved precision.
+- Lazy-loaded to avoid model loading when not needed.
 
-- **Suggested System Prompt:**
+### 3.F. Retrieval Enhancements (`retrieval/`)
 
-> "Act as an expert firmware engineer and operating system architect specialized in Intel x86 32-bit Protected Mode. You are provided with a verified textual fragment from the official reference manual. Using only the memory addresses, structures, and register names present in the context, generate the requested code. If the information is not sufficient, state so explicitly; it is strictly forbidden to hallucinate or invent hardware registers."
+- **`HyDETransformer`**: Hypothetical Document Embeddings.
+- Generates a hypothetical technical document via LLM, then uses its embedding for search.
+- Disabled by default (`HYDE_ENABLED = False`).
 
 ---
 
-## 4. Open-Source Development Roadmap
+## 4. Pipeline Flow
 
-### Phase 1: Seed Dataset Preparation
-- Manually/semi-assisted extraction and cleaning of the Intel manual sections corresponding to the GDT, IDT setup, and paging activation. Create the initial repository with these structured files.
+### Indexing (`python rag.py index`)
+1. Read all `.md` files from `data/curated/`.
+2. Split each document into semantic chunks via `MarkdownChunker`.
+3. Generate embeddings (with cache) via the configured `Embedder`.
+4. Store normalized vectors, texts, and metadata in `VectorStore`.
 
-### Phase 2: Local Vector Pipeline
-- Develop the Python script to automate embedding generation and storage in ChromaDB.
-
-### Phase 3: User Interface and Integration
-- Design a command-line interface (CLI) that allows queries directly from the development terminal and interacts with local code models through Ollama (e.g. qwen2.5-coder, deepseek-coder).
-
-### Phase 4: Agent with Compilation Loop (Future)
-- Connect the generator with tools like `nasm` or `gcc` to capture syntax errors in real-time, allowing the LLM to self-correct before delivering the final code.
+### Querying (`python rag.py query <question>`)
+1. Optionally transform the query via HyDE.
+2. Embed the query/hypothetical document.
+3. Search VectorStore for top-K similar chunks (with similarity threshold).
+4. Re-rank results with cross-encoder (if enabled).
+5. Deduplicate fragments.
+6. Build context within token budget.
+7. Generate response via LLM with system prompt + context injection.
 
 ---
 
-## 5. Suggested Directory Structure
+## 5. Directory Structure
 
 ```
-.
-├── src/
-│   ├── parser/          # Ingestion and parsing module for technical documentation
-│   ├── embedder/        # Semantic chunking and embedding generation module
-│   └── llm_client/      # Prompt orchestration and local LLM query module
+RAGIntelx86/
+├── chunker/
+│   ├── __init__.py
+│   └── markdown.py          # MarkdownChunker
+├── embedder/
+│   ├── __init__.py
+│   ├── base.py              # Embedder (ABC)
+│   ├── cache.py             # EmbeddingCache
+│   ├── local.py             # LocalEmbedder
+│   ├── ollama.py            # OllamaEmbedder
+│   └── openai_client.py     # OpenAIEmbedder
+├── llm/
+│   ├── __init__.py
+│   ├── base.py              # LLMClient (ABC)
+│   ├── ollama.py            # OllamaClient
+│   └── opencode.py          # OpenCodeClient
+├── reranker/
+│   ├── __init__.py
+│   └── reranker.py          # Reranker
+├── retrieval/
+│   ├── __init__.py
+│   └── hyde.py              # HyDETransformer
+├── vectorstore/
+│   ├── __init__.py
+│   └── store.py             # VectorStore
+├── storage/                  # Persisted data (gitignored)
+│   ├── cache/               # Embedding cache
+│   ├── vectors.npy
+│   ├── texts.json
+│   ├── metadata.json
+│   └── config.json
 ├── data/
-│   ├── raw/             # Technical manuals in PDF
-│   └── processed/       # Extracted structured text (Markdown/JSON)
-├── chroma_db/           # Local vector database
-├── CONTEXT.md           # This file
-└── README.md            # Project documentation
+│   └── curated/             # Source markdown documents
+├── tests/                   # Unit tests
+├── config.py                # Centralized configuration
+├── logger.py                # Logging setup
+├── rag.py                   # Main pipeline & CLI
+├── requirements.txt         # Production dependencies
+├── requirements-dev.txt     # Dev dependencies (pytest)
+└── CONTEXT.md               # This file
 ```
 
 ---
 
-*Document generated from the analysis of the initial project context.*
+## 6. Configuration
+
+All configuration is centralized in `config.py`:
+
+- **Embedding**: Provider (`local`/`ollama`/`openai`), model name
+- **LLM**: Provider (`ollama`/`opencode`), model name, base URL
+- **Reranker**: Enable/disable, model, top-K
+- **HyDE**: Enable/disable
+- **Search**: Top-K, similarity threshold, context token budget
+- **Paths**: Data directory, storage directory, cache directory (all absolute)
+
+Secrets are loaded from `.env` file via `python-dotenv`.
+
+---
+
+## 7. Development Roadmap
+
+### Phase 1: Seed Dataset Preparation ✅
+- Curated markdown documents for GDT structure.
+
+### Phase 2: Local Vector Pipeline ✅
+- Embedding, chunking, vector storage, and search implemented.
+
+### Phase 3: User Interface and Integration ✅
+- CLI interface with index and query commands.
+- Multiple LLM provider support (Ollama, OpenCode).
+
+### Phase 4: Retrieval Enhancements ✅
+- Re-ranking with cross-encoder.
+- HyDE (Hypothetical Document Embeddings).
+
+### Phase 5: Expand Knowledge Base (In Progress)
+- Add IDT, Paging, and control register documentation.
+
+### Phase 6: Agent with Compilation Loop (Future)
+- Connect with `nasm`/`gcc` for real-time syntax error correction.
+
+---
+
+*Document updated to reflect the current implementation.*

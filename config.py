@@ -1,7 +1,11 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# --- Paths ---
+BASE_DIR = Path(__file__).resolve().parent
 
 LOG_LEVEL = "INFO"
 
@@ -16,10 +20,12 @@ OLLAMA_BASE_URL = "http://localhost:11434"
 
 OPENCODE_API_KEY = os.getenv("OPENCODE_API_KEY", "")
 OPENCODE_MODEL = "kimi-k2.6"
+# Set to "openai" or "anthropic" to override auto-detection, or None for auto
+OPENCODE_API_TYPE = None
 
-DATA_DIR = "data/curated"
-STORAGE_DIR = "storage"
-CACHE_DIR = "storage/cache"
+DATA_DIR = str(BASE_DIR / "data" / "curated")
+STORAGE_DIR = str(BASE_DIR / "storage")
+CACHE_DIR = str(BASE_DIR / "storage" / "cache")
 
 TOP_K = 10
 SIMILARITY_THRESHOLD = 0.3
