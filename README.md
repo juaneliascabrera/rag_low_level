@@ -4,7 +4,7 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-19%2F19%20passing-green.svg)](https://github.com/yourusername/RAGIntelx86)
+[![Tests](https://img.shields.io/badge/tests-32%2F32%20passing-green.svg)](https://github.com/yourusername/RAGIntelx86)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ---
@@ -44,7 +44,7 @@ and icons for documents, databases, and AI models. Professional documentation st
 - **🏷️ Metadata Filtering** — Filter by component, architecture, mode, tags
 - **⚡ Context Budget** — Automatic truncation to prevent LLM overflow
 - **💾 Embedding Cache** — SHA256-based persistence, invalidates on model change
-- ** 19 Unit Tests** — Full coverage of cache, vectorstore, chunker, reranker, hyde
+- **🧪 32 Unit Tests** — Full coverage of cache, vectorstore, chunker, reranker, hyde, LLM clients
 
 ---
 
@@ -266,7 +266,7 @@ RAGIntelx86/
 │   └── reranker.py           # Cross-encoder reranker
 ├── retrieval/
 │   └── hyde.py               # HyDE transformer
-├── tests/                    # Unit tests (19/19 passing)
+├── tests/                    # Unit tests (32/32 passing)
 └── storage/                  # Auto-generated (gitignored)
     ├── vectors.npy
     ├── texts.json
@@ -334,6 +334,8 @@ pytest tests/test_chunker.py -v
 - `test_hyde.py` — HyDE transformer (2 tests)
 - `test_reranker.py` — Cross-encoder reranker (3 tests)
 - `test_vectorstore.py` — Vector store (5 tests)
+- `test_llm.py` — LLM clients (Ollama, OpenCode) (9 tests)
+- `test_rag.py` — RAG system integration (4 tests)
 
 ---
 
