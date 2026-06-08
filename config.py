@@ -20,6 +20,9 @@ OLLAMA_BASE_URL = "http://localhost:11434"
 
 OPENCODE_API_KEY = os.getenv("OPENCODE_API_KEY", "")
 OPENCODE_MODEL = "kimi-k2.6"
+
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+CLAUDE_MODEL = "claude-sonnet-4-20250514"
 # Set to "openai" or "anthropic" to override auto-detection, or None for auto
 OPENCODE_API_TYPE = None
 

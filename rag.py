@@ -6,7 +6,7 @@ from logger import setup_logging, get_logger
 from embedder import LocalEmbedder, OllamaEmbedder, OpenAIEmbedder, EmbeddingCache
 from vectorstore import VectorStore
 from chunker import MarkdownChunker
-from llm import OllamaClient, OpenCodeClient
+from llm import OllamaClient, OpenCodeClient, ClaudeClient
 from reranker import Reranker
 from retrieval import HyDETransformer
 
@@ -44,6 +44,8 @@ class RAGSystem:
             return OllamaClient(config.OLLAMA_BASE_URL, config.OLLAMA_MODEL)
         elif config.LLM_PROVIDER == "opencode":
             return OpenCodeClient(config.OPENCODE_MODEL, config.OPENCODE_API_KEY)
+        elif config.LLM_PROVIDER == "claude":
+            return ClaudeClient(config.CLAUDE_MODEL, config.ANTHROPIC_API_KEY)
         else:
             raise ValueError(f"Unsupported LLM provider: {config.LLM_PROVIDER}")
 

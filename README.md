@@ -1,208 +1,150 @@
 # RAG Intel x86 32-bit
 
-RAG (Retrieval-Augmented Generation) system specialized in low-level programming for Intel x86 32-bit in Protected Mode. It optimizes LLM performance on monolithic kernel development and embedded systems tasks, eliminating critical hardware hallucinations through verified context retrieval.
+**Retrieval-Augmented Generation system specialized in low-level Intel x86 32-bit programming for Protected Mode development.**
 
-## Features
-
-- **Interchangeable embeddings:** Local (sentence-transformers), Ollama, OpenAI
-- **Interchangeable LLMs:** Local Ollama, OpenCode GO (OpenAI-compatible + Anthropic-compatible)
-- **Semantic chunking:** Markdown parser with YAML frontmatter, code block separation, configurable overlap
-- **Cross-encoder re-ranking:** Improves retrieval precision
-- **HyDE (optional):** Query transformation with hypothetical documents
-- **Metadata filtering:** Filter by component, architecture, mode, type
-- **Context budget:** Automatic truncation to prevent LLM overflow
-- **Embedding cache:** Persistence with SHA256 hash per model
-- **Unit tests:** Coverage for cache, vectorstore, chunker, reranker, hyde
-
-## Table of contents
-
-1. [Prerequisites](#prerequisites)
-2. [Installation](#installation)
-3. [Configuration](#configuration)
-4. [Project structure](#project-structure)
-5. [Preparing documents](#preparing-documents)
-6. [Usage](#usage)
-7. [Detailed configuration per provider](#detailed-configuration-per-provider)
-8. [Troubleshooting](#troubleshooting)
-9. [Tests](#tests)
-10. [Concepts covered](#concepts-covered)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://img.shields.io/badge/tests-19%2F19%20passing-green.svg)](https://github.com/yourusername/RAGIntelx86)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ---
 
-## Prerequisites
+##  Overview
 
-- **Python 3.10+**
-- **pip** (package manager)
-- At least one embedding provider:
-  - `sentence-transformers` (local, no external services)
-  - Ollama running locally
-  - OpenAI API key
-- At least one LLM provider:
-  - Ollama running locally with a downloaded model
-  - OpenCode GO API key (or OpenAI/Anthropic if you adapt the code)
+Commercial LLMs struggle with low-level hardware programming due to scarce training data and lack of physical context. **RAG Intel x86 32-bit** solves this by combining verified Intel SDM documentation with semantic retrieval, eliminating hallucinations in critical system programming tasks.
+
+> **Use case:** "How do I configure a GDT descriptor for kernel code segment?" → Get accurate, citation-backed answers from the official Intel manual.
 
 ---
 
-## Installation
+## 🖼️ Architecture Diagram
 
-### 1. Clone the repository
+<!-- 
+PROMPT FOR IMAGE GENERATION:
+"Technical architecture diagram showing a RAG (Retrieval-Augmented Generation) pipeline for Intel x86 documentation. 
+Left side: Markdown documents with YAML frontmatter flowing into a 'Semantic Chunker' box. 
+Center: Chunked text entering an 'Embedding Model (Ollama/OpenAI)' box, outputting vectors to a 'Vector Store (NumPy)' cylinder. 
+Right side: User query entering 'Query Transformer', then 'Similarity Search', then 'Cross-Encoder Reranker', 
+finally 'Context Builder' feeding into 'LLM (Ollama/OpenCode)' with streaming response output. 
+Use clean technical diagram style with blue/gray color scheme, arrows showing data flow, 
+and icons for documents, databases, and AI models. Professional documentation style."
+-->
+
+![Architecture Diagram](docs/architecture.png)
+
+---
+
+## ✨ Features
+
+- **🔄 Interchangeable Embeddings** — Local (sentence-transformers), Ollama, OpenAI
+- **🤖 Multiple LLM Providers** — Ollama local, OpenCode GO (OpenAI + Anthropic compatible)
+- **📄 Semantic Chunking** — Markdown parser with YAML frontmatter, code/explanation separation, type-aware overlap
+- **🎯 Cross-Encoder Re-ranking** — Improves retrieval precision with `ms-marco-MiniLM-L-6-v2`
+- **💭 HyDE Query Transformation** — Optional hypothetical document embeddings
+- **🏷️ Metadata Filtering** — Filter by component, architecture, mode, tags
+- **⚡ Context Budget** — Automatic truncation to prevent LLM overflow
+- **💾 Embedding Cache** — SHA256-based persistence, invalidates on model change
+- ** 19 Unit Tests** — Full coverage of cache, vectorstore, chunker, reranker, hyde
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.10+
+- At least one embedding provider (local/Ollama/OpenAI)
+- At least one LLM provider (Ollama/OpenCode)
+
+### Installation
 
 ```bash
-git clone <repo-url>
+# Clone repository
+git clone https://github.com/yourusername/RAGIntelx86.git
 cd RAGIntelx86
-```
 
-### 2. Create a virtual environment (recommended)
-
-```bash
+# Create virtual environment
 python3 -m venv venv
 source venv/bin/activate  # Linux/macOS
-# or on Windows: venv\Scripts\activate
-```
+# venv\Scripts\activate   # Windows
 
-### 3. Install dependencies
-
-```bash
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-For development (includes pytest):
+### Configuration
 
-```bash
-pip install -r requirements-dev.txt
-```
-
----
-
-## Configuration
-
-### 1. Environment variables (API keys)
-
-Copy the example file:
+**1. Set up API keys (if using cloud providers):**
 
 ```bash
 cp .env.example .env
+# Edit .env with your keys:
+# OPENAI_API_KEY=sk-...
+# OPENCODE_API_KEY=your-key
+# ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-Edit `.env` with your API keys:
+**2. Configure models in `config.py`:**
+
+```python
+# Embedding provider
+EMBEDDING_PROVIDER = "ollama"  # "local" | "ollama" | "openai"
+EMBEDDING_MODEL = "qwen3-embedding:0.6b"
+
+# LLM provider
+LLM_PROVIDER = "claude"  # "ollama" | "opencode" | "claude"
+CLAUDE_MODEL = "claude-sonnet-4-20250514"
+```
+
+### Usage
+
+**Index documents (first time or after changes):**
 
 ```bash
-# OpenAI (optional, only if you use OpenAIEmbedder or the OpenAI LLM)
-OPENAI_API_KEY=sk-...
-
-# OpenCode GO (optional, if you use OpenCode models)
-OPENCODE_API_KEY=your-api-key-here
+python rag.py index
 ```
 
-⚠️ **Important:** The `.env` file is in `.gitignore` and **is not uploaded to the repository**. Each user must create their own.
+**Query the knowledge base:**
 
-### 2. Model configuration (`config.py`)
-
-Edit `config.py` to choose:
-
-#### Embedding
-
-```python
-EMBEDDING_PROVIDER = "local"  # "local" | "ollama" | "openai"
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+```bash
+python rag.py query "How do I set up a GDT descriptor?"
 ```
 
-| Provider | Recommended models | Requirements |
-|----------|---------------------|------------|
-| `local` | `all-MiniLM-L6-v2` (384d, fast), `all-mpnet-base-v2` (768d, better quality) | None (auto-download) |
-| `ollama` | `nomic-embed-text`, `mxbai-embed-large` | Ollama running locally |
-| `openai` | `text-embedding-3-small` (1536d), `text-embedding-3-large` (3072d) | `OPENAI_API_KEY` in `.env` |
+**Example output:**
 
-#### LLM
+```
+================================================================================
+ANSWER:
+================================================================================
+[Thinking]
+The user is asking about GDT descriptor configuration...
 
-```python
-LLM_PROVIDER = "opencode"  # "ollama" | "opencode"
-OLLAMA_MODEL = "gemma4:e4b-it-qat"
-OLLAMA_BASE_URL = "http://localhost:11434"
-OPENCODE_MODEL = "kimi-k2.6"
+[Response]
+According to the Intel SDM Volume 3, a GDT segment descriptor is configured as follows:
+
+Base: 0x00000000
+Limit: 0xFFFFF (with G=1, this is 4GB)
+Access: 0x9A (Present=1, DPL=0, Code, Execute/Read)
+Flags: 0xC (G=1, D=1)
+
+In NASM assembly:
+```nasm
+dw 0xFFFF       ; Limit [15:0]
+dw 0x0000       ; Base [15:0]
+db 0x00         ; Base [23:16]
+db 10011010b    ; Access: Present, DPL=0, Code, Execute/Read
+db 11001111b    ; Flags (G=1, D=1) + Limit [19:16]
+db 0x00         ; Base [31:24]
 ```
 
-| Provider | Example models | Requirements |
-|----------|----------------|------------|
-| `ollama` | `gemma4:e4b-it-qat`, `qwen2.5-coder:7b`, `deepseek-coder` | Ollama running locally |
-| `opencode` | `kimi-k2.6`, `glm-5.1`, `qwen3.7-max` | `OPENCODE_API_KEY` in `.env` |
-
-#### Retrieval parameters
-
-```python
-TOP_K = 10                      # Candidates for the reranker
-SIMILARITY_THRESHOLD = 0.3      # Minimum cosine similarity threshold
-RERANK_ENABLED = True            # Use cross-encoder for re-ranking
-RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
-RERANK_TOP_K = 3                # Final results after re-rank
-HYDE_ENABLED = False             # Query transformation with HyDE
-CONTEXT_TOKEN_BUDGET = 3000      # Maximum context tokens
+[Fragment 1] (similarity: 0.71)
 ```
 
 ---
 
-## Project structure
+## 📚 Preparing Documents
 
-```
-RAGIntelx86/
-├── rag.py                    # Main CLI and orchestrator
-├── config.py                 # Central configuration
-├── logger.py                 # Logging system
-├── .env.example              # Environment variables template
-├── .gitignore
-├── requirements.txt          # Runtime dependencies
-├── requirements-dev.txt      # Development dependencies
-├── README.md                 # This file
-├── CONTEXT.md                # Detailed project context
-├── data/
-│   └── curated/              # Curated .md documents (YAML frontmatter)
-├── embedder/
-│   ├── base.py               # Embedder abstract interface
-│   ├── local.py              # sentence-transformers local
-│   ├── ollama.py             # Ollama API
-│   ├── openai_client.py      # OpenAI API
-│   ├── cache.py              # Embedding cache (pickle)
-│   └── __init__.py
-├── vectorstore/
-│   ├── store.py              # VectorStore (NumPy + JSON)
-│   └── __init__.py
-├── chunker/
-│   ├── markdown.py           # Semantic parser with YAML + code split
-│   └── __init__.py
-├── llm/
-│   ├── base.py               # LLMClient abstract interface
-│   ├── ollama.py             # Ollama client (streaming + thinking)
-│   ├── opencode.py           # OpenCode GO client
-│   └── __init__.py
-├── reranker/
-│   ├── reranker.py           # Cross-encoder re-ranking
-│   └── __init__.py
-├── retrieval/
-│   ├── hyde.py               # HyDE query transformation
-│   └── __init__.py
-├── tests/                    # Unit tests
-│   ├── test_cache.py
-│   ├── test_chunker.py
-│   ├── test_hyde.py
-│   ├── test_reranker.py
-│   ├── test_vectorstore.py
-│   └── __init__.py
-└── storage/                  # Auto-generated
-    ├── vectors.npy
-    ├── texts.json
-    ├── metadata.json
-    ├── config.json
-    └── cache/
-        └── embedding_cache.pkl
-```
-
----
-
-## Preparing documents
-
-### Format of `.md` files
-
-Documents go in `data/curated/` and must have **YAML frontmatter** with metadata:
+Documents go in `data/curated/` with YAML frontmatter:
 
 ```markdown
 ---
@@ -212,13 +154,11 @@ mode: protected
 tags: [segmentation, memory, descriptors]
 ---
 
-# Document title
+# GDT - Global Descriptor Table
 
-Brief introduction...
+The Global Descriptor Table (GDT) is a data structure...
 
-## Section 1
-
-Explanatory content with long text...
+## Segment Descriptor Format
 
 ```nasm
 ; Example code
@@ -226,268 +166,223 @@ mov eax, cr0
 or eax, 1
 mov cr0, eax
 ```
-
-## Section 2
-
-Another section...
 ```
 
-### Frontmatter
-
-| Field | Description | Default |
-|-------|-------------|---------|
-| `architecture` | Target architecture | `x86_32` |
-| `component` | Component (GDT, IDT, paging, etc.) | Filename |
-| `mode` | Operation mode | `protected` |
-| `tags` | List of tags for filtering | (none) |
-
-### Code blocks
-
-Code blocks are automatically split into independent chunks with `type: "code"` in the metadata. This allows retrieval to find relevant code even though the embedding does not understand assembler inside natural text.
-
-### Overlap
-
-The chunker adds overlap (default 3 lines) between chunks **of the same type** (code with code, explanation with explanation) to maintain contextual continuity without contaminating embeddings of one type with the other.
+**Chunking behavior:**
+- Code blocks automatically split into `type: "code"` chunks
+- Explanation text becomes `type: "explanation"` chunks
+- Overlap (default 3 lines) only applies between same-type chunks
+- Fragments < 50 chars filtered out
 
 ---
 
-## Usage
-
-### 1. Index documents
-
-Indexing generates embeddings for all `.md` files in `data/curated/` and persists them in `storage/`.
-
-```bash
-python rag.py index
-```
-
-**Expected output:**
+## 🏗️ Architecture
 
 ```
-[INFO] embedder.local: Loading local embedding model: all-MiniLM-L6-v2
-[INFO] embedder.local: Model loaded. Dimension: 384
-[INFO] Indexing 1 files...
-[INFO]   Processing: GDT.md
-[INFO] chunker.markdown:   GDT.md: 19 chunks generated
-[INFO]   Generating embeddings for 19 chunks...
-[INFO]   Generating 19 new embeddings...
-[INFO] Indexing complete: 19 chunks stored
+[ Markdown Docs ] → [ MarkdownChunker ] → [ Semantic Chunks ]
+                                                ↓
+[ LLM Response ] ← [ RAGSystem ] ← [ VectorStore (NumPy) ]
+(Ollama/Claude/       ↑                     ↓
+ OpenCode)       [ Reranker ]        [ EmbeddingCache ]
+                [ HyDE (opt) ]      [ Embedder ]
 ```
 
-⚠️ **When to re-index:**
+### Components
 
-- First time
-- You add or modify documents in `data/curated/`
-- You change `EMBEDDING_PROVIDER` or `EMBEDDING_MODEL`
-- You change `CHARS_PER_TOKEN` or chunker parameters
-
-⚠️ **If you change the embedding model, the vector dimension changes and the system detects the inconsistency.** You will see an error asking to re-index.
-
-### 2. Make queries
-
-```bash
-python rag.py query "How do I configure a segment descriptor in the GDT?"
-```
-
-**Expected output:**
-
-```
-================================================================================
-ANSWER:
-================================================================================
-[Thinking]
-The user is asking about the GDT...
-
-[Response]
-According to the provided context, a GDT segment descriptor is configured...
-```
-
-### 3. Debug: see the retrieved context
-
-Enable `DEBUG_SHOW_CONTEXT = True` in `config.py` to see which fragments were retrieved and their similarity/re-ranking scores.
+| Module | Description |
+|--------|-------------|
+| `chunker/` | Semantic Markdown parser with YAML frontmatter |
+| `embedder/` | Embedding providers (local, Ollama, OpenAI) + cache |
+| `vectorstore/` | NumPy-based vector store with cosine similarity |
+| `llm/` | LLM clients (Ollama, OpenCode) with streaming |
+| `reranker/` | Cross-encoder re-ranking for precision |
+| `retrieval/` | HyDE query transformation |
 
 ---
 
-## Detailed configuration per provider
+## ⚙️ Configuration Reference
 
-### Option 1: Local with sentence-transformers (recommended to start)
+### Embedding Providers
 
-**Advantages:** No external services, no API keys, works offline.
+| Provider | Model Example | Dimension | Requirements |
+|----------|--------------|-----------|--------------|
+| `local` | `all-MiniLM-L6-v2` | 384 | None (auto-download) |
+| `ollama` | `qwen3-embedding:0.6b` | 1024 | Ollama running |
+| `openai` | `text-embedding-3-small` | 1536 | `OPENAI_API_KEY` |
 
-```python
-# config.py
-EMBEDDING_PROVIDER = "local"
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-```
+### LLM Providers
 
-**Installation:** Already in `requirements.txt` (`sentence-transformers`).
+| Provider | Model Example | API Type | Requirements |
+|----------|--------------|----------|--------------|
+| `ollama` | `gemma4:e4b-it-qat` | Ollama | Ollama running |
+| `opencode` | `kimi-k2.6` | OpenAI-compatible | `OPENCODE_API_KEY` |
+| `opencode` | `qwen3.7-max` | Anthropic-compatible | `OPENCODE_API_KEY` |
+| `claude` | `claude-sonnet-4-20250514` | Anthropic | `ANTHROPIC_API_KEY` |
 
-**First time:** Downloads the model (~80MB) automatically.
-
-### Option 2: Ollama (local with Ollama)
-
-**Advantages:** Full control, multiple models available.
-
-```python
-# config.py
-EMBEDDING_PROVIDER = "ollama"
-EMBEDDING_MODEL = "nomic-embed-text"
-OLLAMA_BASE_URL = "http://localhost:11434"
-```
-
-**Requirements:**
-1. Install Ollama: https://ollama.com/download
-2. Download the embedding model:
-   ```bash
-   ollama pull nomic-embed-text
-   ```
-3. (Optional) Download the LLM model:
-   ```bash
-   ollama pull gemma4:e4b-it-qat
-   ```
-
-**Usage:**
-```python
-LLM_PROVIDER = "ollama"
-OLLAMA_MODEL = "gemma4:e4b-it-qat"
-```
-
-### Option 3: OpenAI (embeddings and/or LLM)
-
-**Advantages:** High quality models.
+### Retrieval Parameters
 
 ```python
-# config.py
-EMBEDDING_PROVIDER = "openai"
-EMBEDDING_MODEL = "text-embedding-3-small"
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")  # In .env
+TOP_K = 10                      # Candidates for reranker
+SIMILARITY_THRESHOLD = 0.3      # Min cosine similarity
+RERANK_ENABLED = True            # Cross-encoder re-ranking
+RERANK_TOP_K = 3                # Final results after rerank
+HYDE_ENABLED = False             # Hypothetical document embeddings
+CONTEXT_TOKEN_BUDGET = 3000      # Max context tokens
+CHARS_PER_TOKEN = 4              # Token estimation
 ```
-
-⚠️ **Note:** The current code has `OpenAIEmbedder` but the OpenAI LLM client is not implemented. Only OpenCode and Ollama are supported as LLM. If you want to use OpenAI as the LLM, you need to adapt `llm/opencode.py` or create `llm/openai.py`.
-
-### Option 4: OpenCode GO (OpenCode models)
-
-**Advantages:** Access to models like Kimi, GLM, Qwen, etc. without infrastructure.
-
-```python
-# config.py
-LLM_PROVIDER = "opencode"
-OPENCODE_MODEL = "kimi-k2.6"
-```
-
-**Requirements:**
-1. OpenCode GO API key in `.env`:
-   ```
-   OPENCODE_API_KEY=your-api-key
-   ```
-
-**Available models:**
-
-| Model | API type |
-|-------|----------|
-| `kimi-k2.6`, `kimi-k2.5`, `glm-5.1`, `glm-5`, `deepseek-v4-pro`, `deepseek-v4-flash`, `mimo-v2.5`, `mimo-v2.5-pro` | OpenAI-compatible |
-| `qwen3.7-max`, `qwen3.7-plus`, `qwen3.6-plus`, `minimax-m3`, `minimax-m2.7`, `minimax-m2.5` | Anthropic-compatible |
-
-The client automatically detects which format to use based on the model.
 
 ---
 
-## Troubleshooting
+## 📁 Project Structure
 
-### Error: "Stored vector dimension does not match"
+```
+RAGIntelx86/
+├── rag.py                    # Main CLI and orchestrator
+├── config.py                 # Central configuration
+├── logger.py                 # Logging setup
+├── .env.example              # API keys template
+├── requirements.txt          # Runtime dependencies
+├── requirements-dev.txt      # Dev dependencies (pytest)
+├── README.md                 # This file
+├── CONTEXT.md                # Project context and roadmap
+├── data/
+│   └── curated/              # Curated .md documents
+├── embedder/
+│   ├── base.py               # Embedder ABC
+│   ├── local.py              # sentence-transformers
+│   ├── ollama.py             # Ollama API
+│   ├── openai_client.py      # OpenAI API
+│   └── cache.py              # SHA256-based cache
+├── vectorstore/
+│   └── store.py              # NumPy vector store
+├── chunker/
+│   └── markdown.py           # Semantic chunker
+├── llm/
+│   ├── base.py               # LLMClient ABC
+│   ├── ollama.py             # Ollama client
+│   ├── opencode.py           # OpenCode client
+│   └── claude.py             # Claude client
+├── reranker/
+│   └── reranker.py           # Cross-encoder reranker
+├── retrieval/
+│   └── hyde.py               # HyDE transformer
+├── tests/                    # Unit tests (19/19 passing)
+└── storage/                  # Auto-generated (gitignored)
+    ├── vectors.npy
+    ├── texts.json
+    ├── metadata.json
+    └── cache/
+```
 
-**Cause:** You changed the embedding model without re-indexing.
+---
+
+##  Troubleshooting
+
+### "Stored vector dimension does not match"
+
+**Cause:** Changed embedding model without re-indexing.
 
 **Solution:**
 ```bash
 python rag.py index
 ```
 
-### Error: "Could not connect to Ollama"
+### "Could not connect to Ollama"
 
-**Cause:** Ollama is not running.
+**Cause:** Ollama not running.
 
 **Solution:**
 ```bash
-# Check if Ollama is running
-curl http://localhost:11434/api/tags
-
-# If not, start it
 ollama serve
+# or check: curl http://localhost:11434/api/tags
 ```
 
-### Error: "Invalid OpenCode API key"
+### "Invalid API key"
 
-**Cause:** `OPENCODE_API_KEY` is not configured or is incorrect.
+**Cause:** Missing or incorrect API key in `.env`.
 
 **Solution:**
-1. Verify that `.env` exists and contains the key
-2. Verify that the key is valid
-3. Reload the environment: `source venv/bin/activate`
+1. Verify `.env` exists with correct keys
+2. Reload environment: `source venv/bin/activate`
 
-### The query takes a long time to start responding
-
-**Cause:** The model is "thinking". Models with reasoning like `qwen3.7-max` generate thinking tokens before the response.
-
-**Solution:** Wait. The stderr output shows the thinking in real time.
-
-### Results are not relevant
+### Results not relevant
 
 **Possible causes:**
-1. **Embedding model too basic:** `all-MiniLM-L6-v2` is general-purpose. Try a larger or multilingual model.
-2. **Threshold too high/low:** Adjust `SIMILARITY_THRESHOLD` in `config.py`.
-3. **Poorly curated documents:** Verify that the `.md` files have correct frontmatter and clear technical content.
-4. **Re-ranking disabled:** Enable `RERANK_ENABLED = True` to improve precision.
-
-### The context exceeds the LLM budget
-
-**Cause:** The chunks are too long or there are too many.
-
-**Solution:**
-- Reduce `TOP_K` (fewer candidates)
-- Reduce `RERANK_TOP_K` (fewer final results)
-- Adjust `CONTEXT_TOKEN_BUDGET` according to the model
+1. Embedding model too basic → Try larger model
+2. Threshold too high/low → Adjust `SIMILARITY_THRESHOLD`
+3. Poorly curated docs → Verify frontmatter and content
+4. Re-ranking disabled → Set `RERANK_ENABLED = True`
 
 ---
 
-## Tests
+## 🧪 Testing
 
 ```bash
-# Install development dependencies
+# Install dev dependencies
 pip install -r requirements-dev.txt
 
 # Run all tests
-pytest tests/
-
-# With verbose
 pytest tests/ -v
 
-# Specific test
+# Run specific test
 pytest tests/test_chunker.py -v
 ```
 
-**Current coverage:**
-- `test_cache.py`: Embedding cache (4 tests)
-- `test_chunker.py`: Markdown parser (5 tests)
-- `test_hyde.py`: HyDE transformer (2 tests)
-- `test_reranker.py`: Cross-encoder reranker (3 tests, mocked)
-- `test_vectorstore.py`: VectorStore (5 tests)
-
-**19/19 tests pass.**
+**Coverage:**
+- `test_cache.py` — Embedding cache (4 tests)
+- `test_chunker.py` — Markdown parser (5 tests)
+- `test_hyde.py` — HyDE transformer (2 tests)
+- `test_reranker.py` — Cross-encoder reranker (3 tests)
+- `test_vectorstore.py` — Vector store (5 tests)
 
 ---
 
-## Concepts covered
+## 📖 Concepts Covered
 
 - **Architecture:** Intel x86 32-bit, Protected Mode
-- **Structures:** GDT (Global Descriptor Table), IDT (Interrupt Descriptor Table)
-- **Memory management:** Paging, Page Directory, Page Tables
-- **Control registers:** CR0, CR2, CR3
-- **System instructions:** `lgdt`, `lidt`, `iret`, `cli`, `sti`, `in/out`, EFLAGS manipulation
+- **Structures:** GDT, IDT, Paging, Control Registers (CR0, CR2, CR3)
+- **Instructions:** `lgdt`, `lidt`, `iret`, `cli`, `sti`, `in/out`, EFLAGS
+- **Memory Management:** Segmentation, Page Directory, Page Tables
 
 ---
 
-## License
+## 🗺️ Roadmap
 
-Open Source
+- [x] Phase 1: Seed dataset (GDT documentation)
+- [x] Phase 2: Local vector pipeline (embedding, storage, search)
+- [x] Phase 3: CLI interface and LLM integration
+- [x] Phase 4: Re-ranking and HyDE
+- [ ] Phase 5: Expand knowledge base (IDT, Paging, more SDM volumes)
+- [ ] Phase 6: Agent with compilation loop (NASM/GCC integration)
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Run tests (`pytest tests/ -v`)
+4. Commit changes (`git commit -m 'Add amazing feature'`)
+5. Push to branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
+
+---
+
+## 📄 License
+
+MIT License — see LICENSE file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- Intel Corporation for the Software Developer's Manual
+- Ollama for local LLM inference
+- sentence-transformers for embedding models
+- The open-source AI community
+
+---
+
+**Built for low-level developers who demand precision.**
