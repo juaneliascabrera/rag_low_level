@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from tqdm import tqdm
 import config
 from logger import setup_logging, get_logger
 from embedder import LocalEmbedder, OllamaEmbedder, OpenAIEmbedder, EmbeddingCache
@@ -74,13 +75,13 @@ class RAGSystem:
         self.store.clear()
 
         all_chunks = []
-        for filepath in md_files:
-            logger.info(f"  Processing: {filepath.name}")
+        # Process files with progress bar
+        for filepath in tqdm(md_files, desc="Processing files", unit="file"):
             chunks = self.chunker.chunk(str(filepath))
             all_chunks.extend(chunks)
 
         if all_chunks:
-            logger.info(f"  Generating embeddings for {len(all_chunks)} chunks...")
+            logger.info(f"Total chunks: {len(all_chunks)}")
 
             texts = [chunk["text"] for chunk in all_chunks]
             vectors = [None] * len(texts)
@@ -88,7 +89,8 @@ class RAGSystem:
             texts_to_embed = []
             cache_hits = []
 
-            for i, text in enumerate(texts):
+            # Check cache with progress
+            for i, text in enumerate(tqdm(texts, desc="Checking cache", unit="chunk")):
                 cached = self.cache.get(text)
                 if cached:
                     vectors[i] = cached
@@ -97,17 +99,30 @@ class RAGSystem:
                     texts_to_embed.append((i, text))
 
             if cache_hits:
-                logger.info(f"  Cache: {len(cache_hits)} chunks retrieved from cache")
+                logger.info(f"Cache: {len(cache_hits)} chunks retrieved from cache")
 
             if texts_to_embed:
-                logger.info(f"  Generating {len(texts_to_embed)} new embeddings...")
-                texts_only = [t[1] for t in texts_to_embed]
-                new_vectors = self.embedder.embed_batch(texts_only)
+                logger.info(f"Generating {len(texts_to_embed)} new embeddings...")
+                
+                # Process embeddings in batches with progress
+                BATCH_SIZE = 32
+                total_batches = (len(texts_to_embed) + BATCH_SIZE - 1) // BATCH_SIZE
+                
+                for batch_idx in tqdm(range(total_batches), desc="Embedding", unit="batch"):
+                    start_idx = batch_idx * BATCH_SIZE
+                    end_idx = min(start_idx + BATCH_SIZE, len(texts_to_embed))
+                    batch_items = texts_to_embed[start_idx:end_idx]
+                    batch_texts = [t[1] for t in batch_items]
+                    
+                    # Generate embeddings for this batch
+                    batch_vectors = self.embedder.embed_batch(batch_texts)
+                    
+                    # Store in cache and vectors array
+                    for (i, text), vector in zip(batch_items, batch_vectors):
+                        self.cache.set(text, vector)
+                        vectors[i] = vector
 
-                for (i, text), vector in zip(texts_to_embed, new_vectors):
-                    self.cache.set(text, vector)
-                    vectors[i] = vector
-
+            # Add all vectors to store
             for chunk, vector in zip(all_chunks, vectors):
                 self.store.add(vector, chunk["text"], chunk["metadata"])
 
