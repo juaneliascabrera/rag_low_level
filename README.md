@@ -74,27 +74,87 @@ pip install -r requirements.txt
 
 ### Configuration
 
-**1. Set up API keys (if using cloud providers):**
+All configuration is done via `.env` file. Copy the template and customize:
 
 ```bash
 cp .env.example .env
-# Edit .env with your keys:
-# OPENAI_API_KEY=sk-...
-# OPENCODE_API_KEY=your-key
-# ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-**2. Configure models in `config.py`:**
+**Full `.env` reference:**
 
-```python
-# Embedding provider
-EMBEDDING_PROVIDER = "ollama"  # "local" | "ollama" | "openai"
-EMBEDDING_MODEL = "qwen3-embedding:0.6b"
+```bash
+# --- Logging ---
+LOG_LEVEL=INFO
 
-# LLM provider
-LLM_PROVIDER = "claude"  # "ollama" | "opencode" | "claude"
-CLAUDE_MODEL = "claude-sonnet-4-20250514"
+# --- Embedding Provider ---
+# Options: local, ollama, openai
+EMBEDDING_PROVIDER=ollama
+EMBEDDING_MODEL=qwen3-embedding:0.6b
+
+# --- LLM Provider ---
+# Options: ollama, opencode, claude
+LLM_PROVIDER=opencode
+
+# Ollama settings
+OLLAMA_MODEL=gemma4:e4b-it-qat
+OLLAMA_BASE_URL=http://localhost:11434
+
+# OpenCode settings
+OPENCODE_MODEL=kimi-k2.6
+# OPENCODE_API_TYPE=  # "openai" or "anthropic" to override auto-detection
+
+# Claude settings
+CLAUDE_MODEL=claude-sonnet-4-20250514
+
+# --- API Keys ---
+OPENAI_API_KEY=
+OPENCODE_API_KEY=
+ANTHROPIC_API_KEY=
+
+# --- Retrieval Parameters ---
+TOP_K=10                    # Candidates for reranker
+SIMILARITY_THRESHOLD=0.3    # Min cosine similarity (0.0-1.0)
+RERANK_ENABLED=true         # Enable cross-encoder re-ranking
+RERANK_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
+RERANK_TOP_K=3              # Final results after rerank
+HYDE_ENABLED=false          # Hypothetical Document Embeddings
+
+# --- Context Budget ---
+CONTEXT_TOKEN_BUDGET=3000   # Max tokens sent to LLM
+CHARS_PER_TOKEN=4           # Estimation factor (chars  this = tokens)
+
+# --- Debug ---
+DEBUG_SHOW_CONTEXT=false    # Show retrieved fragments in stderr
+
+# --- Custom System Prompt (optional) ---
+# SYSTEM_PROMPT=You are an expert firmware engineer...
 ```
+
+**Key variables explained:**
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `EMBEDDING_PROVIDER` | Embedding backend (`local`, `ollama`, `openai`) | `ollama` |
+| `EMBEDDING_MODEL` | Model name for embeddings | `qwen3-embedding:0.6b` |
+| `LLM_PROVIDER` | LLM backend (`ollama`, `opencode`, `claude`) | `opencode` |
+| `TOP_K` | Number of candidates retrieved before reranking | `10` |
+| `SIMILARITY_THRESHOLD` | Min similarity score to include results | `0.3` |
+| `RERANK_ENABLED` | Enable cross-encoder re-ranking | `true` |
+| `RERANK_TOP_K` | Final results after reranking | `3` |
+| `HYDE_ENABLED` | Transform query into hypothetical document | `false` |
+| `CONTEXT_TOKEN_BUDGET` | Max tokens sent to LLM (prevents overflow) | `3000` |
+| `DEBUG_SHOW_CONTEXT` | Print retrieved fragments to stderr | `false` |
+
+**Example: Switch from Ollama to Claude**
+
+```bash
+# In .env
+LLM_PROVIDER=claude
+CLAUDE_MODEL=claude-sonnet-4-20250514
+ANTHROPIC_API_KEY=sk-ant-api03-...
+```
+
+No code changes needed. The system reads `.env` automatically.
 
 ### Usage
 
